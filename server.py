@@ -261,7 +261,7 @@ async def voice_chat(audio: UploadFile = File(...), claim_id: str = Form(...)):
 
 @app.post("/api/upload")
 async def upload_images(files: list[UploadFile] = File(...), claim_id: str = Form(...)):
-    """Accept image uploads, save to uploads/ dir, return URLs."""
+    """Accept image uploads, save to uploads/ dir, analyze with Claude vision."""
     claim = None
     for c in claims_cache:
         if c["id"] == claim_id:
@@ -271,6 +271,7 @@ async def upload_images(files: list[UploadFile] = File(...), claim_id: str = For
         raise HTTPException(404, "Claim not found")
 
     urls = []
+    saved_paths = []
     for f in files:
         ext = Path(f.filename or "photo.jpg").suffix or ".jpg"
         name = f"{uuid.uuid4().hex[:12]}{ext}"
@@ -278,8 +279,40 @@ async def upload_images(files: list[UploadFile] = File(...), claim_id: str = For
         content = await f.read()
         dest.write_bytes(content)
         urls.append(f"/uploads/{name}")
+        saved_paths.append(str(dest))
 
-    # Add photo record to conversation
+    # Analyze images with Claude vision
+    analysis_prompt = f"""You are ClaimPilot's damage assessment AI for Equifi (vehicle/equipment financing).
+
+Analyze the uploaded photo(s) for this insurance claim:
+- Vehicle: {claim['vehicle']} ({claim['registration']})
+- Incident: {claim['incident']}
+- Insurer: {claim['insurer']}
+
+Provide a concise damage assessment in Hinglish (Hindi-English mix):
+1. What damage is visible
+2. Severity estimate (minor/moderate/major)
+3. Which vehicle parts are affected
+4. Any red flags for the surveyor or insurer
+5. Rough repair cost estimate if possible
+
+Keep it to 3-4 short paragraphs. Use Rs. for amounts. Be specific about what you see."""
+
+    try:
+        cmd = ["claude", "-p", analysis_prompt, "--model", "sonnet"] + saved_paths
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
+        analysis = stdout.decode().strip()
+        if not analysis:
+            analysis = f"[{len(urls)} photo(s) received — analysis unavailable]"
+    except Exception:
+        analysis = f"[{len(urls)} photo(s) received — analysis unavailable]"
+
+    # Add photo + analysis to conversation
     history = conversations.get(claim_id, [])
     history.append({
         "role": "user",
@@ -288,9 +321,13 @@ async def upload_images(files: list[UploadFile] = File(...), claim_id: str = For
         "urls": urls,
         "count": len(urls),
     })
+    history.append({
+        "role": "assistant",
+        "content": analysis,
+    })
     conversations[claim_id] = history
 
-    return {"urls": urls, "count": len(urls)}
+    return {"urls": urls, "count": len(urls), "analysis": analysis}
 
 
 # ── Serve frontend ─────────────────────────────────────────
