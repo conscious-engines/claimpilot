@@ -2,15 +2,17 @@
 
 import subprocess
 import time
+from pathlib import Path
 import pytest
 
 
 @pytest.fixture(scope="session")
 def server():
     """Start the FastAPI server for testing."""
+    project_root = str(Path(__file__).parent.parent)
     proc = subprocess.Popen(
         ["python", "-m", "uvicorn", "server:app", "--host", "127.0.0.1", "--port", "8787"],
-        cwd="/home/ritam/summer/workspace/claimpilot-poc",
+        cwd=project_root,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )

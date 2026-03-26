@@ -1,35 +1,31 @@
 """ClaimPilot POC — FastAPI backend."""
 
 import json
-import subprocess
 import asyncio
+from datetime import datetime
 from pathlib import Path
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
-app = FastAPI(title="ClaimPilot POC")
-
 DATA_DIR = Path(__file__).parent / "data"
 
-# ── Load data ──────────────────────────────────────────────
-
-def load_claims():
-    with open(DATA_DIR / "claims.json") as f:
-        return json.load(f)["claims"]
-
-def load_conversations():
-    with open(DATA_DIR / "conversations.json") as f:
-        return json.load(f)
-
-# In-memory conversation store (seeded from file)
+# In-memory stores (seeded at startup)
+claims_cache: list[dict] = []
 conversations: dict[str, list[dict]] = {}
 
-@app.on_event("startup")
-def seed_data():
-    global conversations
-    conversations = load_conversations()
+@asynccontextmanager
+async def lifespan(app):
+    global claims_cache, conversations
+    with open(DATA_DIR / "claims.json") as f:
+        claims_cache = json.load(f)["claims"]
+    with open(DATA_DIR / "conversations.json") as f:
+        conversations = json.load(f)
+    yield
+
+app = FastAPI(title="ClaimPilot POC", lifespan=lifespan)
 
 
 # ── Models ─────────────────────────────────────────────────
@@ -43,12 +39,12 @@ class ChatMessage(BaseModel):
 
 @app.get("/api/claims")
 def get_claims():
-    return load_claims()
+    return claims_cache
 
 
 @app.get("/api/claims/{claim_id}")
 def get_claim(claim_id: str):
-    for c in load_claims():
+    for c in claims_cache:
         if c["id"] == claim_id:
             return c
     raise HTTPException(404, "Claim not found")
@@ -62,7 +58,7 @@ def get_conversation(claim_id: str):
 @app.post("/api/chat")
 async def chat(msg: ChatMessage):
     claim = None
-    for c in load_claims():
+    for c in claims_cache:
         if c["id"] == msg.claim_id:
             claim = c
             break
@@ -131,7 +127,7 @@ Do NOT use markdown headers. Use plain text with bullet points (•) if needed."
 
 @app.get("/api/metrics")
 def get_metrics():
-    claims = load_claims()
+    claims = claims_cache
     total = len(claims)
     by_status = {}
     total_estimated = 0
@@ -146,7 +142,17 @@ def get_metrics():
             total_settled += c["settled_amount"]
             settled_count += 1
 
-    avg_resolution_days = 19  # synthetic average for the settled claim
+    # Compute avg resolution from settled claims
+    resolution_days = []
+    for c in claims:
+        if c["settled_amount"] and c.get("timeline"):
+            filed = next((t["date"] for t in c["timeline"] if t["type"] == "filing"), None)
+            settled = next((t["date"] for t in reversed(c["timeline"]) if t["type"] == "settlement"), None)
+            if filed and settled:
+                d1 = datetime.fromisoformat(filed)
+                d2 = datetime.fromisoformat(settled)
+                resolution_days.append((d2 - d1).days)
+    avg_resolution_days = round(sum(resolution_days) / len(resolution_days)) if resolution_days else 0
 
     return {
         "total_claims": total,

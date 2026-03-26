@@ -7,6 +7,27 @@ let claims = [];
 let currentClaimId = null;
 let conversations = {};
 
+// ── Helpers ──
+function esc(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function statusClass(status) {
+  return 'status-' + status.toLowerCase().replace(/\s+/g, '-');
+}
+
+function formatAmount(n) {
+  if (n >= 100000) return `Rs. ${(n / 100000).toFixed(2)}L`;
+  if (n >= 1000) return `Rs. ${(n / 1000).toFixed(1)}K`;
+  return `Rs. ${n.toLocaleString('en-IN')}`;
+}
+
+function showLoading(el) {
+  el.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div>Loading...</div>';
+}
+
 // ── Init ──
 document.addEventListener('DOMContentLoaded', async () => {
   setupRoleSwitcher();
@@ -24,7 +45,6 @@ function setupRoleSwitcher() {
       const role = btn.dataset.role;
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
       document.getElementById(`view-${role}`).classList.add('active');
-
       if (role === 'operations') renderOperations();
       if (role === 'management') renderManagement();
     });
@@ -37,15 +57,13 @@ async function loadClaims() {
     const res = await fetch(`${API}/api/claims`);
     claims = await res.json();
     renderClaimTabs();
-    if (claims.length > 0) {
-      selectClaim(claims[0].id);
-    }
+    if (claims.length > 0) selectClaim(claims[0].id);
   } catch (e) {
     console.error('Failed to load claims:', e);
   }
 }
 
-// ── Claim Tabs ──
+// ── Claim Tabs (show vehicle names, not IDs) ──
 function renderClaimTabs() {
   const container = document.getElementById('claimTabs');
   container.innerHTML = '';
@@ -53,7 +71,10 @@ function renderClaimTabs() {
     const btn = document.createElement('button');
     btn.className = 'claim-tab';
     btn.dataset.claimId = c.id;
-    btn.textContent = c.id;
+    // Show short vehicle name instead of claim ID
+    const shortName = c.vehicle.split(' ').slice(0, 2).join(' ');
+    btn.textContent = shortName;
+    btn.title = `${c.id} — ${c.vehicle}`;
     btn.addEventListener('click', () => selectClaim(c.id));
     container.appendChild(btn);
   });
@@ -61,17 +82,14 @@ function renderClaimTabs() {
 
 async function selectClaim(claimId) {
   currentClaimId = claimId;
-  // Update tabs
   document.querySelectorAll('.claim-tab').forEach(t => {
     t.classList.toggle('active', t.dataset.claimId === claimId);
   });
-  // Update header
   const claim = claims.find(c => c.id === claimId);
   if (claim) {
     document.getElementById('chatClaimInfo').textContent =
       `${claim.vehicle} — ${claim.registration} — ${claim.status}`;
   }
-  // Load conversation
   await loadConversation(claimId);
 }
 
@@ -91,8 +109,13 @@ function renderMessages(msgs) {
   container.innerHTML = '';
   msgs.forEach(m => {
     const div = document.createElement('div');
-    div.className = `msg ${m.role}`;
-    div.textContent = m.content;
+    if (m.format === 'voice') {
+      div.className = 'msg user voice-msg';
+      div.innerHTML = `<span class="voice-icon">🎤</span> Voice note <span class="voice-duration">${esc(m.duration || '0:15')}</span>`;
+    } else {
+      div.className = `msg ${esc(m.role)}`;
+      div.textContent = m.content;
+    }
     container.appendChild(div);
   });
   container.scrollTop = container.scrollHeight;
@@ -110,17 +133,16 @@ function setupChat() {
     input.value = '';
     sendBtn.disabled = true;
 
-    // Add user message
     const msgs = conversations[currentClaimId] || [];
     msgs.push({ role: 'user', content: text });
     conversations[currentClaimId] = msgs;
     renderMessages(msgs);
 
-    // Show typing indicator
+    // Typing indicator
     const container = document.getElementById('chatMessages');
     const typing = document.createElement('div');
     typing.className = 'msg typing';
-    typing.textContent = 'ClaimPilot is typing...';
+    typing.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span> ClaimPilot is thinking...';
     container.appendChild(typing);
     container.scrollTop = container.scrollHeight;
 
@@ -132,107 +154,124 @@ function setupChat() {
       });
       const data = await res.json();
       msgs.push({ role: 'assistant', content: data.response });
-      conversations[currentClaimId] = msgs;
+
+      // Simulate integration hit on ops dashboard
+      triggerIntegrationPulse(currentClaimId);
     } catch (e) {
       msgs.push({ role: 'assistant', content: 'Sorry, kuch technical issue aa gaya. Please try again.' });
     }
 
+    conversations[currentClaimId] = msgs;
     renderMessages(msgs);
     sendBtn.disabled = false;
     input.focus();
   }
 
   sendBtn.addEventListener('click', send);
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') send();
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+}
+
+// ── Integration Pulse Animation ──
+function triggerIntegrationPulse(claimId) {
+  // If ops view is rendered, pulse the integration chips for this claim
+  const card = document.querySelector(`.claim-card[data-claim-id="${claimId}"]`);
+  if (!card) return;
+  const chips = card.querySelectorAll('.integration-chip');
+  chips.forEach((chip, i) => {
+    setTimeout(() => {
+      chip.classList.add('pulse');
+      setTimeout(() => chip.classList.remove('pulse'), 1200);
+    }, i * 300);
   });
 }
 
 // ── Operations View ──
 async function renderOperations() {
+  const grid = document.getElementById('claimsGrid');
+  const list = document.getElementById('timelineList');
+  showLoading(grid);
+  showLoading(list);
+
   try {
     const res = await fetch(`${API}/api/claims`);
     const claimsData = await res.json();
     renderClaimsGrid(claimsData);
     renderTimeline(claimsData);
   } catch (e) {
-    console.error('Failed to load operations data:', e);
+    grid.innerHTML = '<p>Failed to load claims.</p>';
   }
-}
-
-function statusClass(status) {
-  return 'status-' + status.toLowerCase().replace(/\s+/g, '-');
-}
-
-function formatAmount(n) {
-  if (n >= 100000) return `Rs. ${(n / 100000).toFixed(2)}L`;
-  if (n >= 1000) return `Rs. ${(n / 1000).toFixed(1)}K`;
-  return `Rs. ${n.toLocaleString('en-IN')}`;
 }
 
 function renderClaimsGrid(claimsData) {
   const grid = document.getElementById('claimsGrid');
   grid.innerHTML = '';
+
   claimsData.forEach(c => {
+    const card = document.createElement('div');
+    card.className = 'claim-card';
+    card.dataset.claimId = c.id;
+
     const integrations = c.integrations || {};
-    const chipHTML = Object.entries(integrations).map(([key, val]) => {
-      const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-      const st = val.status || 'pending';
+    const chipsHTML = Object.entries(integrations).map(([key, val]) => {
+      const label = esc(key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
+      const st = esc(val.status || 'pending');
       return `<span class="integration-chip ${st}"><span class="dot"></span>${label}</span>`;
     }).join('');
 
-    grid.innerHTML += `
-      <div class="claim-card" data-claim-id="${c.id}">
-        <div class="claim-card-header">
-          <div>
-            <div class="claim-card-id">${c.id}</div>
-            <div class="claim-card-vehicle">${c.vehicle}</div>
-            <div class="claim-card-reg">${c.registration}</div>
-          </div>
-          <span class="status-badge ${statusClass(c.status)}">${c.status}</span>
+    card.innerHTML = `
+      <div class="claim-card-header">
+        <div>
+          <div class="claim-card-id">${esc(c.id)}</div>
+          <div class="claim-card-vehicle">${esc(c.vehicle)}</div>
+          <div class="claim-card-reg">${esc(c.registration)}</div>
         </div>
-        <div class="claim-card-incident">${c.incident}</div>
-        <div class="claim-card-details">
-          <div><div class="claim-detail-label">Insurer</div><div class="claim-detail-value">${c.insurer}</div></div>
-          <div><div class="claim-detail-label">Amount</div><div class="claim-detail-value">${formatAmount(c.estimated_amount)}</div></div>
-          <div><div class="claim-detail-label">Claimant</div><div class="claim-detail-value">${c.claimant_name}</div></div>
-          <div><div class="claim-detail-label">Surveyor</div><div class="claim-detail-value">${c.surveyor || 'Pending'}</div></div>
-        </div>
-        <div class="integrations-row">${chipHTML}</div>
+        <span class="status-badge ${statusClass(c.status)}">${esc(c.status)}</span>
       </div>
+      <div class="claim-card-incident">${esc(c.incident)}</div>
+      <div class="claim-card-details">
+        <div><div class="claim-detail-label">Insurer</div><div class="claim-detail-value">${esc(c.insurer)}</div></div>
+        <div><div class="claim-detail-label">Amount</div><div class="claim-detail-value">${formatAmount(c.estimated_amount)}</div></div>
+        <div><div class="claim-detail-label">Claimant</div><div class="claim-detail-value">${esc(c.claimant_name)}</div></div>
+        <div><div class="claim-detail-label">Surveyor</div><div class="claim-detail-value">${esc(c.surveyor || 'Pending')}</div></div>
+      </div>
+      <div class="integrations-row">${chipsHTML}</div>
     `;
+    grid.appendChild(card);
   });
 }
 
 function renderTimeline(claimsData) {
   const list = document.getElementById('timelineList');
-  // Collect all timeline events across claims
   const events = [];
   claimsData.forEach(c => {
-    (c.timeline || []).forEach(t => {
-      events.push({ ...t, claimId: c.id });
-    });
+    (c.timeline || []).forEach(t => events.push({ ...t, claimId: c.id }));
   });
-  // Sort newest first
   events.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  list.innerHTML = events.slice(0, 20).map(e => {
+  list.innerHTML = '';
+  events.slice(0, 20).forEach(e => {
     const d = new Date(e.date);
     const timeStr = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) +
       ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false });
-    return `
-      <div class="timeline-item">
-        <span class="timeline-dot ${e.type}"></span>
-        <span class="timeline-time">${timeStr}</span>
-        <span class="timeline-event">${e.event}</span>
-        <span class="timeline-claim-tag">${e.claimId}</span>
-      </div>
+    const item = document.createElement('div');
+    item.className = 'timeline-item';
+    item.innerHTML = `
+      <span class="timeline-dot ${esc(e.type)}"></span>
+      <span class="timeline-time">${esc(timeStr)}</span>
+      <span class="timeline-event">${esc(e.event)}</span>
+      <span class="timeline-claim-tag">${esc(e.claimId)}</span>
     `;
-  }).join('');
+    list.appendChild(item);
+  });
 }
 
 // ── Management View ──
 async function renderManagement() {
+  const metricsGrid = document.getElementById('metricsGrid');
+  const statusBreakdown = document.getElementById('statusBreakdown');
+  const decisionsList = document.getElementById('decisionsList');
+  showLoading(metricsGrid);
+
   try {
     const res = await fetch(`${API}/api/metrics`);
     const data = await res.json();
@@ -240,7 +279,7 @@ async function renderManagement() {
     renderStatusBreakdown(data);
     renderDecisions(data);
   } catch (e) {
-    console.error('Failed to load metrics:', e);
+    metricsGrid.innerHTML = '<p>Failed to load metrics.</p>';
   }
 }
 
@@ -249,7 +288,7 @@ function renderMetrics(data) {
   grid.innerHTML = `
     <div class="metric-card">
       <div class="metric-label">Total Claims</div>
-      <div class="metric-value">${data.total_claims}</div>
+      <div class="metric-value">${parseInt(data.total_claims)}</div>
       <div class="metric-sub">Active portfolio</div>
     </div>
     <div class="metric-card">
@@ -260,11 +299,11 @@ function renderMetrics(data) {
     <div class="metric-card">
       <div class="metric-label">Total Settled</div>
       <div class="metric-value">${formatAmount(data.total_settled)}</div>
-      <div class="metric-sub">${data.settled_count} claim${data.settled_count !== 1 ? 's' : ''} settled</div>
+      <div class="metric-sub">${parseInt(data.settled_count)} claim${data.settled_count !== 1 ? 's' : ''} settled</div>
     </div>
     <div class="metric-card">
       <div class="metric-label">Avg Resolution</div>
-      <div class="metric-value">${data.avg_resolution_days}d</div>
+      <div class="metric-value">${parseInt(data.avg_resolution_days)}d</div>
       <div class="metric-sub">Filing to settlement</div>
     </div>
   `;
@@ -274,24 +313,15 @@ function renderStatusBreakdown(data) {
   const container = document.getElementById('statusBreakdown');
   const total = data.total_claims;
   const statuses = data.by_status;
-  const colors = {
-    'New': 'var(--blue)',
-    'In Progress': 'var(--amber)',
-    'In Repair': 'var(--purple)',
-    'Settled': 'var(--green)'
-  };
+  const colors = { 'New': 'var(--blue)', 'In Progress': 'var(--amber)', 'In Repair': 'var(--purple)', 'Settled': 'var(--green)' };
 
   let barHTML = '';
   let legendHTML = '';
   Object.entries(statuses).forEach(([s, count]) => {
     const pct = (count / total * 100);
-    barHTML += `<div class="status-bar-segment" style="width:${pct}%;background:${colors[s] || '#999'}"></div>`;
-    legendHTML += `
-      <div class="status-legend-item">
-        <span class="status-legend-dot" style="background:${colors[s] || '#999'}"></span>
-        ${s} (${count})
-      </div>
-    `;
+    const color = colors[s] || '#999';
+    barHTML += `<div class="status-bar-segment" style="width:${pct}%;background:${color}"></div>`;
+    legendHTML += `<div class="status-legend-item"><span class="status-legend-dot" style="background:${color}"></span>${esc(s)} (${count})</div>`;
   });
 
   container.innerHTML = `
@@ -303,17 +333,19 @@ function renderStatusBreakdown(data) {
 
 function renderDecisions(data) {
   const list = document.getElementById('decisionsList');
-  list.innerHTML = (data.agent_actions || []).map(a => {
+  list.innerHTML = '';
+  (data.agent_actions || []).forEach(a => {
     const d = new Date(a.time);
     const timeStr = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) +
       ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false });
-    return `
-      <div class="decision-item">
-        <span class="decision-type ${a.type}">${a.type}</span>
-        <span class="decision-action">${a.action}</span>
-        <span class="timeline-claim-tag">${a.claim}</span>
-        <span class="decision-time">${timeStr}</span>
-      </div>
+    const item = document.createElement('div');
+    item.className = 'decision-item';
+    item.innerHTML = `
+      <span class="decision-type ${esc(a.type)}">${esc(a.type)}</span>
+      <span class="decision-action">${esc(a.action)}</span>
+      <span class="timeline-claim-tag">${esc(a.claim)}</span>
+      <span class="decision-time">${esc(timeStr)}</span>
     `;
-  }).join('');
+    list.appendChild(item);
+  });
 }
