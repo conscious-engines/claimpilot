@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClaimPilot — AI Claims Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<!-- Top Banner -->
+<div class="top-banner">
+  <div class="brand">
+    <div class="brand-icon">C</div>
+    ClaimPilot
+    <span class="brand-sub">by Equifi</span>
+  </div>
+  <div class="role-switcher" id="roleSwitcher">
+    <button class="role-btn active" data-role="claimant">Claimant</button>
+    <button class="role-btn" data-role="operations">Operations</button>
+    <button class="role-btn" data-role="management">Management</button>
+  </div>
+  <div class="banner-right">
+    <span class="powered-by">POC v0.1</span>
+  </div>
+</div>
+
+<!-- Claimant View -->
+<div class="view active" id="view-claimant">
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="chat-header-avatar">CP</div>
+      <div class="chat-header-info">
+        <h3>ClaimPilot Assistant</h3>
+        <p id="chatClaimInfo">Loading...</p>
+      </div>
+    </div>
+    <div class="claim-tabs" id="claimTabs"></div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-area">
+      <input type="text" id="chatInput" placeholder="Type a message..." autocomplete="off">
+      <button id="chatSend">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- Operations View -->
+<div class="view" id="view-operations">
+  <div class="ops-container">
+    <h2>Operations Dashboard</h2>
+    <p class="ops-subtitle">Active claims and system integrations</p>
+    <div class="claims-grid" id="claimsGrid"></div>
+    <div class="timeline-section">
+      <h3>Integration Activity Log</h3>
+      <div class="timeline-list" id="timelineList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Management View -->
+<div class="view" id="view-management">
+  <div class="mgmt-container">
+    <h2>Management Metrics</h2>
+    <p class="mgmt-subtitle">Portfolio overview and agent performance</p>
+    <div class="metrics-grid" id="metricsGrid"></div>
+    <div class="status-breakdown" id="statusBreakdown"></div>
+    <div class="decisions-section">
+      <h3>Agent Decisions Log</h3>
+      <div class="decisions-list" id="decisionsList"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
