@@ -2,15 +2,28 @@
 
 import json
 import asyncio
+import os
+import uuid
+import time
 from datetime import datetime
 from pathlib import Path
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+import requests as http_requests
+
+# Load .env
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent / ".env")
+
+FAL_KEY = os.getenv("FAL_KEY", "")
 
 DATA_DIR = Path(__file__).parent / "data"
+UPLOADS_DIR = Path(__file__).parent / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
 
 # In-memory stores (seeded at startup)
 claims_cache: list[dict] = []
@@ -26,6 +39,14 @@ async def lifespan(app):
     yield
 
 app = FastAPI(title="ClaimPilot POC", lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # ── Models ─────────────────────────────────────────────────
@@ -174,8 +195,158 @@ def get_metrics():
     }
 
 
+# ── Voice transcription ────────────────────────────────────
+
+def _upload_to_fal(file_bytes: bytes, filename: str) -> str:
+    """Upload audio bytes to fal.ai storage, return URL."""
+    content_type = "audio/webm"
+    if filename.endswith(".wav"):
+        content_type = "audio/wav"
+    elif filename.endswith(".ogg"):
+        content_type = "audio/ogg"
+    elif filename.endswith(".m4a"):
+        content_type = "audio/m4a"
+    elif filename.endswith(".mp3"):
+        content_type = "audio/mpeg"
+
+    resp = http_requests.post(
+        "https://rest.alpha.fal.ai/storage/upload",
+        headers={"Authorization": f"Key {FAL_KEY}"},
+        files={"file": (filename, file_bytes, content_type)},
+    )
+    if resp.status_code == 200:
+        return resp.json().get("url") or resp.json().get("access_url")
+    raise RuntimeError(f"fal upload failed ({resp.status_code}): {resp.text[:200]}")
+
+
+def _transcribe_fal(audio_url: str) -> str:
+    """Send audio URL to fal.ai Whisper and return transcribed text."""
+    headers = {
+        "Authorization": f"Key {FAL_KEY}",
+        "Content-Type": "application/json",
+    }
+    payload = {"audio_url": audio_url, "task": "transcribe", "chunk_level": "segment"}
+
+    # Try queue endpoint first
+    resp = http_requests.post(
+        "https://queue.fal.run/fal-ai/whisper",
+        headers=headers,
+        json=payload,
+    )
+
+    if resp.status_code != 200:
+        # Fallback to direct endpoint
+        resp = http_requests.post(
+            "https://fal.run/fal-ai/whisper",
+            headers=headers,
+            json=payload,
+        )
+        if resp.status_code == 200:
+            return resp.json().get("text", "")
+        raise RuntimeError(f"Whisper API error ({resp.status_code})")
+
+    queue_data = resp.json()
+    request_id = queue_data.get("request_id")
+    status_url = queue_data.get("status_url") or f"https://queue.fal.run/fal-ai/whisper/requests/{request_id}/status"
+    result_url = queue_data.get("response_url") or f"https://queue.fal.run/fal-ai/whisper/requests/{request_id}"
+
+    # Poll for completion (max 60s)
+    for _ in range(60):
+        status_resp = http_requests.get(status_url, headers={"Authorization": f"Key {FAL_KEY}"})
+        if status_resp.status_code == 200:
+            status = status_resp.json().get("status")
+            if status == "COMPLETED":
+                break
+            if status in ("FAILED", "CANCELLED"):
+                raise RuntimeError(f"Transcription {status}")
+        time.sleep(1)
+    else:
+        raise RuntimeError("Transcription timed out")
+
+    result_resp = http_requests.get(result_url, headers={"Authorization": f"Key {FAL_KEY}"})
+    if result_resp.status_code == 200:
+        return result_resp.json().get("text", "")
+    raise RuntimeError(f"Failed to fetch transcription result ({result_resp.status_code})")
+
+
+@app.post("/api/voice")
+async def voice_chat(audio: UploadFile = File(...), claim_id: str = Form(...)):
+    """Accept audio upload, transcribe via Whisper, send to Claude chat."""
+    if not FAL_KEY:
+        raise HTTPException(500, "FAL_KEY not configured")
+
+    claim = None
+    for c in claims_cache:
+        if c["id"] == claim_id:
+            claim = c
+            break
+    if not claim:
+        raise HTTPException(404, "Claim not found")
+
+    # Read audio bytes
+    audio_bytes = await audio.read()
+    filename = audio.filename or "recording.webm"
+
+    # Upload to fal and transcribe (run in thread to not block)
+    loop = asyncio.get_event_loop()
+    try:
+        audio_url = await loop.run_in_executor(None, _upload_to_fal, audio_bytes, filename)
+        transcription = await loop.run_in_executor(None, _transcribe_fal, audio_url)
+    except Exception as e:
+        raise HTTPException(500, f"Transcription failed: {str(e)[:200]}")
+
+    if not transcription.strip():
+        transcription = "(no speech detected)"
+
+    # Reuse chat logic — send transcription as a normal message
+    msg = ChatMessage(claim_id=claim_id, message=transcription)
+    result = await chat(msg)
+
+    return {
+        "transcription": transcription,
+        "response": result["response"],
+    }
+
+
+# ── Image upload ──────────────────────────────────────────
+
+@app.post("/api/upload")
+async def upload_images(files: list[UploadFile] = File(...), claim_id: str = Form(...)):
+    """Accept image uploads, save to uploads/ dir, return URLs."""
+    claim = None
+    for c in claims_cache:
+        if c["id"] == claim_id:
+            claim = c
+            break
+    if not claim:
+        raise HTTPException(404, "Claim not found")
+
+    urls = []
+    for f in files:
+        ext = Path(f.filename or "photo.jpg").suffix or ".jpg"
+        name = f"{uuid.uuid4().hex[:12]}{ext}"
+        dest = UPLOADS_DIR / name
+        content = await f.read()
+        dest.write_bytes(content)
+        urls.append(f"/uploads/{name}")
+
+    # Add photo record to conversation
+    history = conversations.get(claim_id, [])
+    history.append({
+        "role": "user",
+        "content": f"[{len(urls)} photo(s) uploaded]",
+        "format": "photo",
+        "urls": urls,
+        "count": len(urls),
+    })
+    conversations[claim_id] = history
+
+    return {"urls": urls, "count": len(urls)}
+
+
 # ── Serve frontend ─────────────────────────────────────────
 
+app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
 
 @app.get("/")

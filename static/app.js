@@ -111,7 +111,23 @@ function renderMessages(msgs) {
     const div = document.createElement('div');
     if (m.format === 'voice') {
       div.className = 'msg user voice-msg';
-      div.innerHTML = `<span class="voice-icon">🎤</span> Voice note <span class="voice-duration">${esc(m.duration || '0:15')}</span>`;
+      div.innerHTML = `
+        <div class="voice-msg-header">
+          <span class="voice-icon">🎤</span>
+          <span>Voice note</span>
+          <span class="voice-duration">${esc(m.duration || '0:15')}</span>
+          <div class="voice-waveform"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        </div>
+        ${m.transcription ? `<div class="voice-transcription">"${esc(m.transcription)}"</div>` : ''}
+      `;
+    } else if (m.format === 'photo') {
+      div.className = 'msg user photo-msg';
+      const urls = m.urls || [];
+      const gridHtml = urls.map(u => `<img src="${esc(u)}" alt="uploaded photo">`).join('');
+      div.innerHTML = `
+        <div class="photo-grid">${gridHtml}</div>
+        <div class="photo-label">📷 ${urls.length} photo${urls.length !== 1 ? 's' : ''} uploaded</div>
+      `;
     } else {
       div.className = `msg ${esc(m.role)}`;
       div.textContent = m.content;
@@ -125,7 +141,11 @@ function renderMessages(msgs) {
 function setupChat() {
   const input = document.getElementById('chatInput');
   const sendBtn = document.getElementById('chatSend');
+  const micBtn = document.getElementById('chatMic');
+  const imageBtn = document.getElementById('chatImage');
+  const imageInput = document.getElementById('imageInput');
 
+  // ── Text send ──
   async function send() {
     const text = input.value.trim();
     if (!text || !currentClaimId) return;
@@ -138,13 +158,7 @@ function setupChat() {
     conversations[currentClaimId] = msgs;
     renderMessages(msgs);
 
-    // Typing indicator
-    const container = document.getElementById('chatMessages');
-    const typing = document.createElement('div');
-    typing.className = 'msg typing';
-    typing.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span> ClaimPilot is thinking...';
-    container.appendChild(typing);
-    container.scrollTop = container.scrollHeight;
+    showTypingIndicator();
 
     try {
       const res = await fetch(`${API}/api/chat`, {
@@ -154,8 +168,6 @@ function setupChat() {
       });
       const data = await res.json();
       msgs.push({ role: 'assistant', content: data.response });
-
-      // Simulate integration hit on ops dashboard
       triggerIntegrationPulse(currentClaimId);
     } catch (e) {
       msgs.push({ role: 'assistant', content: 'Sorry, kuch technical issue aa gaya. Please try again.' });
@@ -169,6 +181,175 @@ function setupChat() {
 
   sendBtn.addEventListener('click', send);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+
+  // ── Voice recording ──
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let recordingStart = null;
+  let recordingTimer = null;
+
+  micBtn.addEventListener('click', async () => {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+      // Stop recording
+      mediaRecorder.stop();
+      return;
+    }
+
+    // Start recording
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream, { mimeType: getMimeType() });
+      audioChunks = [];
+
+      mediaRecorder.ondataavailable = e => {
+        if (e.data.size > 0) audioChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        // Clean up
+        stream.getTracks().forEach(t => t.stop());
+        micBtn.classList.remove('recording');
+        removeRecordingIndicator();
+        clearInterval(recordingTimer);
+
+        const elapsed = Math.round((Date.now() - recordingStart) / 1000);
+        const duration = formatDuration(elapsed);
+        const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
+
+        // Show voice message placeholder in chat
+        const msgs = conversations[currentClaimId] || [];
+        const voiceMsg = { role: 'user', format: 'voice', duration: duration, transcription: '' };
+        msgs.push(voiceMsg);
+        conversations[currentClaimId] = msgs;
+        renderMessages(msgs);
+
+        showTypingIndicator();
+        sendBtn.disabled = true;
+        micBtn.disabled = true;
+
+        // Upload and transcribe
+        try {
+          const ext = mediaRecorder.mimeType.includes('webm') ? '.webm' : '.ogg';
+          const formData = new FormData();
+          formData.append('audio', blob, `recording${ext}`);
+          formData.append('claim_id', currentClaimId);
+
+          const res = await fetch(`${API}/api/voice`, { method: 'POST', body: formData });
+          const data = await res.json();
+
+          if (res.ok) {
+            voiceMsg.transcription = data.transcription;
+            msgs.push({ role: 'assistant', content: data.response });
+          } else {
+            msgs.push({ role: 'assistant', content: `Error: ${data.detail || 'Transcription failed'}` });
+          }
+          triggerIntegrationPulse(currentClaimId);
+        } catch (e) {
+          msgs.push({ role: 'assistant', content: 'Sorry, voice message mein error aa gaya. Please try again.' });
+        }
+
+        conversations[currentClaimId] = msgs;
+        renderMessages(msgs);
+        sendBtn.disabled = false;
+        micBtn.disabled = false;
+      };
+
+      mediaRecorder.start();
+      recordingStart = Date.now();
+      micBtn.classList.add('recording');
+      showRecordingIndicator();
+    } catch (e) {
+      console.error('Mic access denied:', e);
+      alert('Microphone access is needed for voice notes. Please allow mic access and try again.');
+    }
+  });
+
+  function getMimeType() {
+    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) return 'audio/webm;codecs=opus';
+    if (MediaRecorder.isTypeSupported('audio/webm')) return 'audio/webm';
+    if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) return 'audio/ogg;codecs=opus';
+    return '';
+  }
+
+  function formatDuration(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  function showRecordingIndicator() {
+    removeRecordingIndicator();
+    const indicator = document.createElement('div');
+    indicator.className = 'recording-indicator';
+    indicator.id = 'recordingIndicator';
+    indicator.innerHTML = '<span class="recording-dot"></span> Recording... <span class="recording-timer" id="recordingTimerDisplay">0:00</span>';
+    const inputArea = document.querySelector('.chat-input-area');
+    inputArea.parentNode.insertBefore(indicator, inputArea);
+
+    recordingTimer = setInterval(() => {
+      const elapsed = Math.round((Date.now() - recordingStart) / 1000);
+      const timerEl = document.getElementById('recordingTimerDisplay');
+      if (timerEl) timerEl.textContent = formatDuration(elapsed);
+    }, 500);
+  }
+
+  function removeRecordingIndicator() {
+    const el = document.getElementById('recordingIndicator');
+    if (el) el.remove();
+  }
+
+  // ── Image upload ──
+  imageBtn.addEventListener('click', () => {
+    if (!currentClaimId) return;
+    imageInput.click();
+  });
+
+  imageInput.addEventListener('change', async () => {
+    const files = imageInput.files;
+    if (!files || files.length === 0 || !currentClaimId) return;
+
+    sendBtn.disabled = true;
+    imageBtn.disabled = true;
+
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+      formData.append('files', files[i]);
+    }
+    formData.append('claim_id', currentClaimId);
+
+    try {
+      const res = await fetch(`${API}/api/upload`, { method: 'POST', body: formData });
+      const data = await res.json();
+
+      if (res.ok) {
+        const msgs = conversations[currentClaimId] || [];
+        msgs.push({
+          role: 'user',
+          content: `[${data.count} photo(s) uploaded]`,
+          format: 'photo',
+          urls: data.urls,
+          count: data.count,
+        });
+        conversations[currentClaimId] = msgs;
+        renderMessages(msgs);
+      }
+    } catch (e) {
+      console.error('Image upload failed:', e);
+    }
+
+    sendBtn.disabled = false;
+    imageBtn.disabled = false;
+    imageInput.value = '';
+  });
+}
+
+function showTypingIndicator() {
+  const container = document.getElementById('chatMessages');
+  const typing = document.createElement('div');
+  typing.className = 'msg typing';
+  typing.innerHTML = '<span class="typing-dots"><span></span><span></span><span></span></span> ClaimPilot is thinking...';
+  container.appendChild(typing);
+  container.scrollTop = container.scrollHeight;
 }
 
 // ── Integration Pulse Animation ──

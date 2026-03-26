@@ -2,18 +2,32 @@
 
 AI-powered vehicle insurance claims management agent for commercial vehicles and construction equipment. Built as a POC for Equifi (vehicle/equipment financing, Bhubaneswar).
 
+## Prerequisites
+
+**Claude Code** (CLI) is required for the chat backend. Install it:
+
+```bash
+# macOS / Linux
+npm install -g @anthropic-ai/claude-code
+
+# Verify it works
+claude --version
+claude -p "hello" --model sonnet
+```
+
+You need an active Claude Code subscription or API access. See [claude.ai/claude-code](https://claude.ai/claude-code) for details.
+
 ## Setup
 
 ```bash
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
 playwright install chromium
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your API keys:
-#   FAL_KEY     — fal.ai key for Whisper voice transcription
-#   ANTHROPIC_API_KEY — Anthropic key (optional, for direct API usage)
+# Edit .env — add your fal.ai key for voice transcription:
+#   FAL_KEY — get one at https://fal.ai/dashboard/keys
 ```
 
 ## Run
