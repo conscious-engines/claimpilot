@@ -197,86 +197,26 @@ def get_metrics():
 
 # ── Voice transcription ────────────────────────────────────
 
-def _upload_to_fal(file_bytes: bytes, filename: str) -> str:
-    """Upload audio bytes to fal.ai storage, return URL."""
-    content_type = "audio/webm"
-    if filename.endswith(".wav"):
-        content_type = "audio/wav"
-    elif filename.endswith(".ogg"):
-        content_type = "audio/ogg"
-    elif filename.endswith(".m4a"):
-        content_type = "audio/m4a"
-    elif filename.endswith(".mp3"):
-        content_type = "audio/mpeg"
+def _upload_and_transcribe(file_bytes: bytes, filename: str) -> str:
+    """Upload audio to fal CDN via fal_client, transcribe with Whisper."""
+    import fal_client
+    import tempfile
 
-    # Try multipart upload first
-    resp = http_requests.post(
-        "https://rest.alpha.fal.ai/storage/upload",
-        headers={"Authorization": f"Key {FAL_KEY}"},
-        files={"file": (filename, file_bytes, content_type)},
-    )
-    if resp.status_code == 200:
-        return resp.json().get("url") or resp.json().get("access_url")
+    suffix = Path(filename).suffix or ".webm"
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+        tmp.write(file_bytes)
+        tmp_path = tmp.name
 
-    # Fallback: PUT with raw bytes
-    resp = http_requests.put(
-        "https://fal.run/fal-ai/storage/upload",
-        headers={"Authorization": f"Key {FAL_KEY}", "Content-Type": content_type},
-        data=file_bytes,
-    )
-    if resp.status_code == 200:
-        return resp.json().get("url") or resp.json().get("access_url")
-    raise RuntimeError(f"fal upload failed ({resp.status_code}): {resp.text[:200]}")
-
-
-def _transcribe_fal(audio_url: str) -> str:
-    """Send audio URL to fal.ai Whisper and return transcribed text."""
-    headers = {
-        "Authorization": f"Key {FAL_KEY}",
-        "Content-Type": "application/json",
-    }
-    payload = {"audio_url": audio_url, "task": "transcribe", "chunk_level": "segment"}
-
-    # Try queue endpoint first
-    resp = http_requests.post(
-        "https://queue.fal.run/fal-ai/whisper",
-        headers=headers,
-        json=payload,
-    )
-
-    if resp.status_code != 200:
-        # Fallback to direct endpoint
-        resp = http_requests.post(
-            "https://fal.run/fal-ai/whisper",
-            headers=headers,
-            json=payload,
-        )
-        if resp.status_code == 200:
-            return resp.json().get("text", "")
-        raise RuntimeError(f"Whisper API error ({resp.status_code})")
-
-    queue_data = resp.json()
-    request_id = queue_data.get("request_id")
-    status_url = queue_data.get("status_url") or f"https://queue.fal.run/fal-ai/whisper/requests/{request_id}/status"
-    result_url = queue_data.get("response_url") or f"https://queue.fal.run/fal-ai/whisper/requests/{request_id}"
-
-    # Poll for completion (max 60s)
-    for _ in range(60):
-        status_resp = http_requests.get(status_url, headers={"Authorization": f"Key {FAL_KEY}"})
-        if status_resp.status_code == 200:
-            status = status_resp.json().get("status")
-            if status == "COMPLETED":
-                break
-            if status in ("FAILED", "CANCELLED"):
-                raise RuntimeError(f"Transcription {status}")
-        time.sleep(1)
-    else:
-        raise RuntimeError("Transcription timed out")
-
-    result_resp = http_requests.get(result_url, headers={"Authorization": f"Key {FAL_KEY}"})
-    if result_resp.status_code == 200:
-        return result_resp.json().get("text", "")
-    raise RuntimeError(f"Failed to fetch transcription result ({result_resp.status_code})")
+    try:
+        audio_url = fal_client.upload_file(tmp_path)
+        result = fal_client.run("fal-ai/whisper", arguments={
+            "audio_url": audio_url,
+            "task": "transcribe",
+            "chunk_level": "segment",
+        })
+        return result.get("text", "")
+    finally:
+        os.unlink(tmp_path)
 
 
 @app.post("/api/voice")
@@ -297,11 +237,10 @@ async def voice_chat(audio: UploadFile = File(...), claim_id: str = Form(...)):
     audio_bytes = await audio.read()
     filename = audio.filename or "recording.webm"
 
-    # Upload to fal and transcribe (run in thread to not block)
+    # Upload to fal CDN and transcribe (run in thread to not block)
     loop = asyncio.get_event_loop()
     try:
-        audio_url = await loop.run_in_executor(None, _upload_to_fal, audio_bytes, filename)
-        transcription = await loop.run_in_executor(None, _transcribe_fal, audio_url)
+        transcription = await loop.run_in_executor(None, _upload_and_transcribe, audio_bytes, filename)
     except Exception as e:
         raise HTTPException(500, f"Transcription failed: {str(e)[:200]}")
 
