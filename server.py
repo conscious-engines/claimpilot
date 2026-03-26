@@ -209,10 +209,20 @@ def _upload_to_fal(file_bytes: bytes, filename: str) -> str:
     elif filename.endswith(".mp3"):
         content_type = "audio/mpeg"
 
+    # Try multipart upload first
     resp = http_requests.post(
         "https://rest.alpha.fal.ai/storage/upload",
         headers={"Authorization": f"Key {FAL_KEY}"},
         files={"file": (filename, file_bytes, content_type)},
+    )
+    if resp.status_code == 200:
+        return resp.json().get("url") or resp.json().get("access_url")
+
+    # Fallback: PUT with raw bytes
+    resp = http_requests.put(
+        "https://fal.run/fal-ai/storage/upload",
+        headers={"Authorization": f"Key {FAL_KEY}", "Content-Type": content_type},
+        data=file_bytes,
     )
     if resp.status_code == 200:
         return resp.json().get("url") or resp.json().get("access_url")
