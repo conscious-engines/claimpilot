@@ -1,0 +1,1945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClaimPilot — AI Claims Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --accent: #c2653a;
+  --accent-light: #f3ddd3;
+  --accent-hover: #a8522d;
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --surface-secondary: #f0efed;
+  --border: #e5e4e1;
+  --border-light: #eeede9;
+  --text-primary: #1a1a1a;
+  --text-secondary: #6b6b6b;
+  --text-tertiary: #999;
+  --green: #1a8c5e;
+  --green-bg: #e6f5ee;
+  --blue: #2563eb;
+  --blue-bg: #e8f0fe;
+  --amber: #d97706;
+  --amber-bg: #fef3c7;
+  --red: #dc2626;
+  --red-bg: #fee2e2;
+  --purple: #7c3aed;
+  --purple-bg: #ede9fe;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.1);
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Top Banner ── */
+.top-banner {
+  background: var(--text-primary);
+  color: #fff;
+  padding: 0 24px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.3px;
+}
+
+.brand-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.brand-sub {
+  font-size: 11px;
+  font-weight: 400;
+  color: rgba(255,255,255,0.5);
+  margin-left: 8px;
+}
+
+.role-switcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.role-btn {
+  padding: 7px 16px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.role-btn:hover {
+  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.06);
+}
+
+.role-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.banner-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.powered-by {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+}
+
+.powered-by a {
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+}
+
+/* ── Views Container ── */
+.view { display: none; }
+.view.active { display: block; }
+
+/* ═══════════════════════════════════════
+   VIEW 1: CLAIMANT (CHAT)
+   ═══════════════════════════════════════ */
+.chat-container {
+  max-width: 520px;
+  margin: 0 auto;
+  height: calc(100vh - 56px);
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+.chat-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.chat-header-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--accent-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.chat-header-info h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.chat-header-info p {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.claim-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.claim-tab {
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font);
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.claim-tab:hover { color: var(--text-primary); }
+
+.claim-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--surface-secondary);
+}
+
+.chat-date-divider {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  padding: 8px 0;
+}
+
+.chat-date-divider span {
+  background: rgba(0,0,0,0.06);
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+
+.msg {
+  max-width: 82%;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  position: relative;
+}
+
+.msg-time {
+  font-size: 10px;
+  color: rgba(0,0,0,0.35);
+  margin-top: 3px;
+  text-align: right;
+}
+
+.msg.user {
+  align-self: flex-end;
+  background: #dcf8c6;
+  border-bottom-right-radius: 4px;
+}
+
+.msg.agent {
+  align-self: flex-start;
+  background: var(--surface);
+  border-bottom-left-radius: 4px;
+  box-shadow: var(--shadow-sm);
+}
+
+.msg.system {
+  align-self: center;
+  background: var(--blue-bg);
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 8px;
+  padding: 8px 14px;
+  max-width: 90%;
+  text-align: center;
+}
+
+.msg.system.success {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+/* Voice note */
+.voice-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 180px;
+}
+
+.voice-play {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.voice-waveform {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1.5px;
+  height: 28px;
+}
+
+.voice-waveform .bar {
+  width: 3px;
+  background: rgba(0,0,0,0.25);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.voice-duration {
+  font-size: 11px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* Photo message */
+.msg-photo {
+  width: 200px;
+  height: 150px;
+  background: var(--surface-secondary);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.msg-photo .photo-icon {
+  font-size: 32px;
+  opacity: 0.4;
+}
+
+.msg-photo .photo-label {
+  position: absolute;
+  bottom: 6px;
+  left: 8px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  background: rgba(255,255,255,0.85);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Document attachment */
+.msg-doc {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--surface-secondary);
+  border-radius: 8px;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.msg-doc-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--red);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.msg-doc-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.msg-doc-name {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.msg-doc-size {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+/* Chat input */
+.chat-input-area {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.chat-input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-family: var(--font);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.chat-input:focus { border-color: var(--accent); }
+
+.chat-input::placeholder { color: var(--text-tertiary); }
+
+.chat-send, .chat-mic {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.chat-send {
+  background: var(--accent);
+  color: #fff;
+}
+
+.chat-send:hover { background: var(--accent-hover); }
+
+.chat-mic {
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+}
+
+.chat-mic:hover { background: var(--border); }
+
+/* ═══════════════════════════════════════
+   VIEW 2: OPERATIONS
+   ═══════════════════════════════════════ */
+.ops-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  height: calc(100vh - 56px);
+}
+
+.ops-sidebar {
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  overflow-y: auto;
+}
+
+.ops-sidebar-header {
+  padding: 18px 18px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.ops-claim-item {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.ops-claim-item:hover { background: var(--surface-secondary); }
+.ops-claim-item.active { background: var(--accent-light); border-right: 3px solid var(--accent); }
+
+.ops-claim-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.ops-claim-vehicle {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.ops-claim-reg {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+.ops-claim-owner {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.ops-claim-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.ops-claim-amount {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.status-new { background: var(--amber-bg); color: var(--amber); }
+.status-progress { background: var(--blue-bg); color: var(--blue); }
+.status-near { background: var(--green-bg); color: var(--green); }
+.status-resolved { background: var(--surface-secondary); color: var(--text-secondary); }
+
+/* Ops Main */
+.ops-main {
+  overflow-y: auto;
+  padding: 24px;
+  background: var(--bg);
+}
+
+.ops-section {
+  margin-bottom: 24px;
+}
+
+.ops-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+/* Claim summary card */
+.claim-summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.claim-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+}
+
+.claim-summary-field label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.claim-summary-field .value {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.claim-summary-field .value.highlight {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.claim-summary-incident {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-light);
+}
+
+.claim-summary-incident label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: block;
+  margin-bottom: 3px;
+}
+
+.claim-summary-incident p {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* Doc checklist */
+.doc-checklist {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.doc-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.doc-item:last-child { border-bottom: none; }
+
+.doc-status {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.doc-status.done { background: var(--green-bg); color: var(--green); }
+.doc-status.pending { background: var(--amber-bg); color: var(--amber); }
+.doc-status.missing { background: var(--red-bg); color: var(--red); }
+
+.doc-name { flex: 1; font-weight: 500; }
+.doc-note { font-size: 11px; color: var(--text-tertiary); }
+
+/* Timeline */
+.timeline {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  box-shadow: var(--shadow);
+}
+
+.timeline-item {
+  display: flex;
+  gap: 14px;
+  padding-bottom: 14px;
+  position: relative;
+}
+
+.timeline-item:last-child { padding-bottom: 0; }
+
+.timeline-dot-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 12px;
+  flex-shrink: 0;
+}
+
+.timeline-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.timeline-dot.inactive { background: var(--border); }
+
+.timeline-line {
+  width: 2px;
+  flex: 1;
+  background: var(--border-light);
+  margin-top: 4px;
+}
+
+.timeline-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.timeline-event {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.timeline-meta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+/* Deadline tracker */
+.deadline-tracker {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.deadline-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.deadline-item:last-child { border-bottom: none; }
+
+.deadline-label { font-weight: 500; flex: 1; }
+
+.deadline-date { font-size: 12px; color: var(--text-secondary); margin-right: 10px; }
+
+.deadline-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.deadline-green { background: var(--green-bg); color: var(--green); }
+.deadline-amber { background: var(--amber-bg); color: var(--amber); }
+.deadline-red { background: var(--red-bg); color: var(--red); }
+
+/* Integration log */
+.integration-log {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.integration-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 16px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.integration-item:last-child { border-bottom: none; }
+
+.integration-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.integration-icon.crm { background: var(--purple-bg); color: var(--purple); }
+.integration-icon.loan { background: var(--blue-bg); color: var(--blue); }
+.integration-icon.acct { background: var(--green-bg); color: var(--green); }
+.integration-icon.gate { background: var(--amber-bg); color: var(--amber); }
+
+.integration-text { flex: 1; line-height: 1.4; color: var(--text-primary); }
+.integration-time { font-size: 10px; color: var(--text-tertiary); flex-shrink: 0; white-space: nowrap; margin-top: 2px; }
+
+/* Agent reasoning */
+.reasoning-log {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.reasoning-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.reasoning-item:last-child { border-bottom: none; }
+
+.reasoning-decision {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.reasoning-why {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+/* Two column layout for ops */
+.ops-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+/* ═══════════════════════════════════════
+   VIEW 3: MANAGEMENT
+   ═══════════════════════════════════════ */
+.mgmt-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.mgmt-header {
+  margin-bottom: 24px;
+}
+
+.mgmt-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.mgmt-header p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Summary cards */
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+.summary-card-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-weight: 500;
+}
+
+.summary-card-value {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-top: 4px;
+}
+
+.summary-card-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.summary-card-value.accent { color: var(--accent); }
+
+/* Mgmt grid */
+.mgmt-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.mgmt-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+
+.mgmt-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+/* Status breakdown */
+.status-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-row-label {
+  font-size: 13px;
+  width: 120px;
+  flex-shrink: 0;
+}
+
+.status-bar-track {
+  flex: 1;
+  height: 24px;
+  background: var(--surface-secondary);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.status-bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  transition: width 0.5s ease;
+}
+
+.status-bar-fill.new { background: var(--amber); }
+.status-bar-fill.progress { background: var(--blue); }
+.status-bar-fill.near { background: var(--green); }
+.status-bar-fill.resolved { background: var(--text-secondary); }
+
+.status-row-count {
+  font-size: 13px;
+  font-weight: 600;
+  width: 20px;
+  text-align: right;
+}
+
+/* Fleet risk */
+.fleet-risk-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.fleet-risk-table th {
+  text-align: left;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--border-light);
+  font-weight: 500;
+}
+
+.fleet-risk-table td {
+  padding: 10px 0;
+  font-size: 13px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.fleet-risk-table tr:last-child td { border-bottom: none; }
+
+/* Bar chart CSS-only */
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  height: 160px;
+  padding-top: 10px;
+}
+
+.bar-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.bar-value {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.bar-rect {
+  width: 100%;
+  max-width: 48px;
+  border-radius: 5px 5px 0 0;
+  transition: height 0.5s ease;
+}
+
+.bar-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* Cost summary */
+.cost-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.cost-item {
+  padding: 12px;
+  background: var(--surface-secondary);
+  border-radius: var(--radius);
+}
+
+.cost-item label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: block;
+}
+
+.cost-item .cost-val {
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.cost-item .cost-note {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 1px;
+}
+
+/* SLA Compliance */
+.sla-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.sla-item {
+  text-align: center;
+  padding: 14px;
+  background: var(--surface-secondary);
+  border-radius: var(--radius);
+}
+
+.sla-pct {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.sla-pct.green { color: var(--green); }
+.sla-pct.amber { color: var(--amber); }
+
+.sla-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* Full width mgmt card */
+.mgmt-full {
+  margin-bottom: 24px;
+}
+
+/* ── Scrollbar styling ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+  .ops-layout { grid-template-columns: 1fr; }
+  .ops-sidebar { max-height: 200px; }
+  .summary-cards { grid-template-columns: repeat(2, 1fr); }
+  .mgmt-grid { grid-template-columns: 1fr; }
+  .ops-two-col { grid-template-columns: 1fr; }
+  .claim-summary-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 600px) {
+  .role-switcher { display: none; }
+  .summary-cards { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════ TOP BANNER ════════════ -->
+<div class="top-banner">
+  <div class="brand">
+    <div class="brand-icon">C</div>
+    ClaimPilot
+    <span class="brand-sub">AI Claims Agent</span>
+  </div>
+  <div class="role-switcher">
+    <button class="role-btn active" data-view="claimant">Claimant</button>
+    <button class="role-btn" data-view="operations">Operations</button>
+    <button class="role-btn" data-view="management">Management</button>
+  </div>
+  <div class="banner-right">
+    <span class="powered-by">Built for <a href="https://equifi.in" target="_blank">Equifi</a></span>
+  </div>
+</div>
+
+<!-- ════════════ VIEW: CLAIMANT ════════════ -->
+<div class="view active" id="view-claimant">
+  <div class="chat-container">
+    <div class="chat-header">
+      <div class="chat-header-avatar">🤖</div>
+      <div class="chat-header-info">
+        <h3>ClaimPilot Agent</h3>
+        <p>Online — typically replies instantly</p>
+      </div>
+    </div>
+    <div class="claim-tabs" id="claimTabs"></div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-area">
+      <button class="chat-mic" title="Voice note">🎤</button>
+      <input type="text" class="chat-input" placeholder="Type a message...">
+      <button class="chat-send" title="Send">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ VIEW: OPERATIONS ════════════ -->
+<div class="view" id="view-operations">
+  <div class="ops-layout">
+    <div class="ops-sidebar">
+      <div class="ops-sidebar-header">Claims (4)</div>
+      <div id="opsClaimList"></div>
+    </div>
+    <div class="ops-main" id="opsMain"></div>
+  </div>
+</div>
+
+<!-- ════════════ VIEW: MANAGEMENT ════════════ -->
+<div class="view" id="view-management">
+  <div class="mgmt-container" id="mgmtContainer"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  SYNTHETIC DATA
+// ═══════════════════════════════════════════════
+
+const CLAIMS = [
+  {
+    id: "CLM-2026-0041",
+    vehicle: "JCB 3DX Backhoe Loader",
+    reg: "OD-02-BQ-7734",
+    owner: "Sharma Transport & Construction",
+    ownerCity: "Bhubaneswar",
+    incident: "Tipped over during unloading at Whitefield construction site. Boom arm bent, hydraulic line rupture.",
+    insurer: "ICICI Lombard",
+    policy: "ICL-CV-2025-88734",
+    loanStatus: "Active — 14 months remaining via Equifi",
+    loanActive: true,
+    status: "progress",
+    statusLabel: "In Progress",
+    estimatedDamage: "₹2,40,000",
+    estimatedDamageNum: 240000,
+    filed: "March 24, 2026",
+    filedShort: "Mar 24",
+    settlement: null,
+    settlementNum: 0,
+    resolved: null,
+    documents: [
+      { name: "RC Copy", status: "done", note: "Pulled from Equifi CRM" },
+      { name: "Insurance Policy Copy", status: "done", note: "Retrieved via insurer portal" },
+      { name: "Damage Photographs (8)", status: "done", note: "Received from operator" },
+      { name: "Driver's License", status: "done", note: "Uploaded via WhatsApp" },
+      { name: "FIR / Police Report", status: "pending", note: "Not required — private site" },
+      { name: "Surveyor Report", status: "pending", note: "Inspection scheduled Mar 27" },
+      { name: "Repair Estimate", status: "missing", note: "Awaiting surveyor assessment" },
+    ],
+    timeline: [
+      { event: "Claim intimated via WhatsApp voice note", time: "Mar 24, 9:14 AM", active: true },
+      { event: "Agent extracted incident details & confirmed policy", time: "Mar 24, 9:15 AM", active: true },
+      { event: "Damage photos received (8 images)", time: "Mar 24, 9:22 AM", active: true },
+      { event: "Intimation submitted to ICICI Lombard", time: "Mar 24, 9:31 AM", active: true },
+      { event: "Intimation acknowledged — Ref: ICL-CLM-88734-2026", time: "Mar 24, 11:45 AM", active: true },
+      { event: "Surveyor appointed — Mr. R.K. Mohanty", time: "Mar 25, 10:00 AM", active: true },
+      { event: "Inspection scheduled", time: "Mar 27, 10:30 AM", active: false },
+      { event: "Surveyor report submission", time: "Pending", active: false },
+      { event: "Repair authorization", time: "Pending", active: false },
+    ],
+    deadlines: [
+      { label: "Intimation to insurer", date: "Within 24 hrs", status: "green", statusText: "Met" },
+      { label: "Surveyor inspection", date: "Mar 27", status: "green", statusText: "On track" },
+      { label: "Surveyor report filing", date: "Within 7 days of inspection", status: "green", statusText: "On track" },
+      { label: "Claim settlement (IRDAI)", date: "Within 30 days", status: "green", statusText: "On track" },
+    ],
+    integrations: [
+      { type: "crm", text: "Pulled vehicle data & loan details from Equifi CRM — JCB 3DX, Loan #EQ-LN-2024-4471", time: "Mar 24, 9:15 AM" },
+      { type: "loan", text: "Verified active loan status: 14 EMIs remaining, no defaults. Flagged claim to loan servicing team.", time: "Mar 24, 9:16 AM" },
+      { type: "crm", text: "Created claim record in Equifi system — linked to asset ID AST-7734", time: "Mar 24, 9:32 AM" },
+      { type: "acct", text: "Logged provisional estimate (₹2,40,000) in accounting module for receivables tracking", time: "Mar 24, 11:50 AM" },
+    ],
+    reasoning: [
+      { decision: "FIR not required", why: "Incident occurred on a private construction site, not a public road. No third-party involvement. Police report is unnecessary and would delay the claim." },
+      { decision: "Prioritized hydraulic line documentation", why: "Hydraulic line ruptures on JCB 3DX units are commonly disputed by insurers citing 'wear and tear'. Requested close-up photos and video of the rupture point to establish impact causation." },
+      { decision: "Loan team notified proactively", why: "Active Equifi loan on this asset. If vehicle is declared total loss (unlikely but possible with boom arm damage), loan outstanding must be settled from claim proceeds. Early notification ensures smooth coordination." },
+      { decision: "Recommended authorized JCB service center", why: "Cashless claim pathway available at JCB authorized centers. Using unauthorized garage would convert to reimbursement claim, delaying settlement by 15-20 days." },
+    ],
+  },
+  {
+    id: "CLM-2026-0042",
+    vehicle: "Tata Signa 4825.TK Tipper",
+    reg: "OD-14-AB-3391",
+    owner: "Patel Infrastructure Pvt Ltd",
+    ownerCity: "Cuttack",
+    incident: "Collision with highway divider on NH-16 during material transport. Front axle damaged, cabin dented severely.",
+    insurer: "Bajaj Allianz",
+    policy: "BA-CV-2026-11205",
+    loanStatus: "Active — 22 months remaining via Equifi",
+    loanActive: true,
+    status: "new",
+    statusLabel: "New",
+    estimatedDamage: "₹3,85,000",
+    estimatedDamageNum: 385000,
+    filed: "March 26, 2026",
+    filedShort: "Mar 26",
+    settlement: null,
+    settlementNum: 0,
+    resolved: null,
+    documents: [
+      { name: "RC Copy", status: "done", note: "Pulled from Equifi CRM" },
+      { name: "Insurance Policy Copy", status: "done", note: "Retrieved via insurer portal" },
+      { name: "Damage Photographs (12)", status: "done", note: "Received from driver" },
+      { name: "Driver's License", status: "done", note: "Uploaded via WhatsApp" },
+      { name: "FIR / Police Report", status: "pending", note: "Driver visiting PS today" },
+      { name: "Surveyor Report", status: "missing", note: "Surveyor not yet appointed" },
+      { name: "Repair Estimate", status: "missing", note: "Pending surveyor visit" },
+      { name: "Third-party damage assessment", status: "missing", note: "NHAI divider damage — separate assessment needed" },
+    ],
+    timeline: [
+      { event: "Claim intimated via WhatsApp call + photos", time: "Mar 26, 6:48 AM", active: true },
+      { event: "Agent confirmed policy & initiated FIR process guidance", time: "Mar 26, 6:50 AM", active: true },
+      { event: "Damage photos received (12 images)", time: "Mar 26, 6:55 AM", active: true },
+      { event: "Intimation submitted to Bajaj Allianz", time: "Mar 26, 7:15 AM", active: true },
+      { event: "FIR filing", time: "Today — in progress", active: false },
+      { event: "Surveyor appointment", time: "Pending", active: false },
+      { event: "Third-party liability assessment", time: "Pending", active: false },
+    ],
+    deadlines: [
+      { label: "Intimation to insurer", date: "Within 24 hrs", status: "green", statusText: "Met" },
+      { label: "FIR filing", date: "Within 24 hrs", status: "amber", statusText: "Due today" },
+      { label: "Surveyor inspection", date: "TBD", status: "amber", statusText: "Awaiting" },
+      { label: "Third-party claim (NHAI)", date: "Within 30 days", status: "green", statusText: "On track" },
+    ],
+    integrations: [
+      { type: "crm", text: "Pulled vehicle data & loan details from Equifi CRM — Tata Signa, Loan #EQ-LN-2025-1092", time: "Mar 26, 6:50 AM" },
+      { type: "loan", text: "Verified active loan: 22 EMIs remaining, current on payments. High-value asset — escalated to relationship manager.", time: "Mar 26, 6:51 AM" },
+      { type: "crm", text: "Created claim record in Equifi system — linked to asset ID AST-3391", time: "Mar 26, 7:16 AM" },
+      { type: "acct", text: "Logged provisional estimate (₹3,85,000) — flagged as high-value claim in accounting", time: "Mar 26, 7:20 AM" },
+    ],
+    reasoning: [
+      { decision: "FIR required — urgent", why: "Collision occurred on a national highway (NH-16) and involves damage to public property (NHAI highway divider). FIR is mandatory for third-party claims and insurer will reject without it." },
+      { decision: "Flagged third-party liability", why: "Highway divider damage creates a separate liability. NHAI may file a damage recovery claim. Advising fleet owner to document divider condition and get independent photos before area is repaired." },
+      { decision: "Escalated to relationship manager", why: "High claim value (₹3,85,000) with 22 months of loan remaining. If vehicle is off-road for extended repair, EMI burden continues. RM needs to discuss moratorium or restructuring options." },
+      { decision: "Recommended not moving vehicle", why: "Front axle damage suggests vehicle is not roadworthy. Moving it could worsen damage and give insurer grounds to dispute extent of damage. Advised towing to nearest authorized center." },
+    ],
+  },
+  {
+    id: "CLM-2026-0038",
+    vehicle: "Ashok Leyland Dost+ LCV",
+    reg: "OD-05-CD-9987",
+    owner: "Krishna Logistics",
+    ownerCity: "Bhubaneswar",
+    incident: "Rear-ended while stationary at Bhubaneswar toll plaza. Tailgate and cargo bed damaged. No injuries.",
+    insurer: "HDFC ERGO",
+    policy: "HE-CV-2025-56291",
+    loanStatus: "Cleared — no active loan",
+    loanActive: false,
+    status: "near",
+    statusLabel: "Near Resolution",
+    estimatedDamage: "₹78,000",
+    estimatedDamageNum: 78000,
+    filed: "March 15, 2026",
+    filedShort: "Mar 15",
+    settlement: null,
+    settlementNum: 0,
+    resolved: null,
+    documents: [
+      { name: "RC Copy", status: "done", note: "Provided by owner" },
+      { name: "Insurance Policy Copy", status: "done", note: "Retrieved via insurer portal" },
+      { name: "Damage Photographs (5)", status: "done", note: "Received from driver" },
+      { name: "Driver's License", status: "done", note: "Uploaded" },
+      { name: "FIR / Police Report", status: "done", note: "Filed at Mancheswar PS" },
+      { name: "Surveyor Report", status: "done", note: "Submitted Mar 19" },
+      { name: "Repair Estimate", status: "done", note: "₹78,000 — approved by insurer" },
+      { name: "Repair Invoices", status: "pending", note: "70% repair complete, final invoice pending" },
+    ],
+    timeline: [
+      { event: "Claim intimated via WhatsApp", time: "Mar 15, 2:30 PM", active: true },
+      { event: "FIR filed at Mancheswar Police Station", time: "Mar 15, 5:00 PM", active: true },
+      { event: "Intimation submitted to HDFC ERGO", time: "Mar 15, 3:10 PM", active: true },
+      { event: "Surveyor appointed — Mr. S. Behera", time: "Mar 16, 11:00 AM", active: true },
+      { event: "Surveyor inspection completed", time: "Mar 18, 10:00 AM", active: true },
+      { event: "Surveyor report submitted", time: "Mar 19, 4:30 PM", active: true },
+      { event: "Repair authorized by insurer — ₹78,000", time: "Mar 20, 12:00 PM", active: true },
+      { event: "Vehicle at authorized service center — repair in progress (70%)", time: "Mar 22, ongoing", active: true },
+      { event: "Repair completion & final invoice", time: "Expected Mar 28", active: false },
+      { event: "Claim settlement", time: "Pending", active: false },
+    ],
+    deadlines: [
+      { label: "Intimation to insurer", date: "Within 24 hrs", status: "green", statusText: "Met" },
+      { label: "Surveyor report filing", date: "Within 7 days", status: "green", statusText: "Met" },
+      { label: "Repair completion", date: "Mar 28 (est.)", status: "green", statusText: "On track" },
+      { label: "Claim settlement (IRDAI)", date: "Within 30 days of docs", status: "green", statusText: "On track" },
+    ],
+    integrations: [
+      { type: "crm", text: "Pulled vehicle data from Equifi CRM — Ashok Leyland Dost+, no active loan", time: "Mar 15, 2:31 PM" },
+      { type: "loan", text: "Confirmed loan fully repaid. No lien on settlement amount — proceeds go directly to owner.", time: "Mar 15, 2:32 PM" },
+      { type: "gate", text: "Generated gate pass for vehicle transport to Ashok Leyland authorized service center, Patia", time: "Mar 21, 9:00 AM" },
+      { type: "acct", text: "No Equifi financial exposure — claim tracked for fleet analytics only", time: "Mar 15, 3:15 PM" },
+    ],
+    reasoning: [
+      { decision: "FIR recommended despite low value", why: "Third-party vehicle caused the damage (rear-end collision). FIR establishes fault for potential recovery claim against the other party's insurer." },
+      { decision: "Cashless repair pathway selected", why: "HDFC ERGO has a cashless network agreement with the authorized Ashok Leyland center in Patia. Faster settlement, no out-of-pocket for the owner." },
+      { decision: "No Equifi loan escalation needed", why: "Loan is fully cleared. No financial exposure for Equifi. Claim tracked purely for fleet health analytics and customer relationship management." },
+    ],
+  },
+  {
+    id: "CLM-2026-0035",
+    vehicle: "Komatsu PC210 Excavator",
+    reg: "OD-02-BQ-5521",
+    owner: "Sharma Transport & Construction",
+    ownerCity: "Bhubaneswar",
+    incident: "Bucket tooth breakage and track damage from rock impact at quarry site in Jajpur district.",
+    insurer: "ICICI Lombard",
+    policy: "ICL-CV-2025-88190",
+    loanStatus: "Active — 8 months remaining via Equifi",
+    loanActive: true,
+    status: "resolved",
+    statusLabel: "Resolved",
+    estimatedDamage: "₹1,12,000",
+    estimatedDamageNum: 112000,
+    filed: "February 28, 2026",
+    filedShort: "Feb 28",
+    settlement: "₹95,400",
+    settlementNum: 95400,
+    resolved: "March 18, 2026",
+    documents: [
+      { name: "RC Copy", status: "done", note: "" },
+      { name: "Insurance Policy Copy", status: "done", note: "" },
+      { name: "Damage Photographs", status: "done", note: "" },
+      { name: "Surveyor Report", status: "done", note: "" },
+      { name: "Repair Estimate", status: "done", note: "" },
+      { name: "Repair Invoices", status: "done", note: "" },
+      { name: "Settlement Letter", status: "done", note: "₹95,400 after depreciation" },
+    ],
+    timeline: [
+      { event: "Claim intimated via WhatsApp", time: "Feb 28, 11:00 AM", active: true },
+      { event: "Intimation submitted to ICICI Lombard", time: "Feb 28, 11:30 AM", active: true },
+      { event: "Surveyor appointed", time: "Mar 1, 10:00 AM", active: true },
+      { event: "Surveyor inspection at quarry site", time: "Mar 3, 9:00 AM", active: true },
+      { event: "Surveyor report submitted", time: "Mar 5, 3:00 PM", active: true },
+      { event: "Repair authorized — cashless at Komatsu dealer", time: "Mar 7, 11:00 AM", active: true },
+      { event: "Repair completed, vehicle operational", time: "Mar 14, 4:00 PM", active: true },
+      { event: "Claim settled — ₹95,400 (after depreciation)", time: "Mar 18, 12:00 PM", active: true },
+    ],
+    deadlines: [
+      { label: "Intimation to insurer", date: "Within 24 hrs", status: "green", statusText: "Met" },
+      { label: "Surveyor report filing", date: "Within 7 days", status: "green", statusText: "Met" },
+      { label: "Claim settlement (IRDAI)", date: "Within 30 days", status: "green", statusText: "Met — 18 days" },
+    ],
+    integrations: [
+      { type: "crm", text: "Pulled vehicle data from Equifi CRM — Komatsu PC210, Loan #EQ-LN-2024-3892", time: "Feb 28, 11:01 AM" },
+      { type: "loan", text: "Active loan verified. Settlement amount routed: ₹95,400 credited to owner's account after loan clearance check.", time: "Mar 18, 12:05 PM" },
+      { type: "acct", text: "Claim closed in accounting. Depreciation impact: ₹16,600 (14.8%). Final settlement recorded.", time: "Mar 18, 12:10 PM" },
+      { type: "crm", text: "Claim marked resolved in CRM. Total turnaround: 18 days. Customer satisfaction survey sent.", time: "Mar 18, 12:15 PM" },
+    ],
+    reasoning: [
+      { decision: "Depreciation dispute not escalated", why: "Depreciation of 14.8% (₹16,600) is within standard IRDAI guidelines for excavator wear parts (bucket teeth, tracks). Disputing would delay settlement by 30+ days for minimal recovery." },
+      { decision: "Cashless pathway at Komatsu dealer", why: "ICICI Lombard has network agreement with Komatsu authorized dealers. Cashless processing saved the owner from fronting ₹1.12L during repair." },
+      { decision: "Expedited processing recommended", why: "Excavator downtime at quarry costs owner approx ₹8,000/day in lost revenue. Fast-tracked surveyor visit and pushed for early repair authorization." },
+    ],
+  }
+];
+
+// Chat data for each claim
+const CHAT_DATA = {
+  "CLM-2026-0041": [
+    { type: "date", text: "March 24, 2026" },
+    { type: "user", format: "voice", duration: "0:23", text: "", time: "9:14 AM" },
+    { type: "agent", text: "Namaste! Maine aapka voice note sun liya. Samajh aa raha hai — JCB tip ho gaya hai site pe aur boom arm bend ho gaya hai, hydraulic line bhi phoot gayi.\n\nMain abhi aapki claim process start karta hoon. Kuch cheezein confirm kar lijiye:", time: "9:15 AM" },
+    { type: "agent", text: "📋 Quick Confirmation:\n\n• Vehicle: JCB 3DX — OD-02-BQ-7734\n• Policy: ICICI Lombard (ICL-CV-2025-88734)\n• Location: Whitefield construction site\n• Equifi Loan: Active, 14 EMIs remaining\n\nYe sab correct hai kya?", time: "9:15 AM" },
+    { type: "user", text: "haan sahi hai.. bahut tension ho raha hai bhai. kaam ruk gaya poora 😰", time: "9:17 AM" },
+    { type: "agent", text: "Sharma ji, tension mat lijiye — hum handle kar rahe hain. 💪\n\nAbhi sabse pehle — damage ke photos chahiye. Jo bhi damage hua hai — boom arm, hydraulic line, body — sab ke photos bhejiye. Close-up bhi aur full machine ka bhi.\n\nSpecially hydraulic line ka close-up zaroor bhejiye — insurer isko check karta hai.", time: "9:18 AM" },
+    { type: "user", format: "photos", count: 8, label: "Damage photos — JCB 3DX", time: "9:22 AM" },
+    { type: "agent", text: "Photos mil gaye — 8 photos received. 👍\n\nPhotos clear hain, damage properly visible hai. Ab main ICICI Lombard ko intimation bhej raha hoon.", time: "9:23 AM" },
+    { type: "user", text: "FIR dena padega kya? police station jaana padega?", time: "9:25 AM" },
+    { type: "agent", text: "Nahi! FIR ki zaroorat nahi hai. 🙌\n\nYe incident private construction site pe hua hai, public road pe nahi. Koi third party involved nahi hai. Toh police report required nahi hai — main insurer ko bhi ye clarify kar doonga.\n\nEk kaam — apne driver ka license ka photo bhej dijiye, wo chahiye hoga.", time: "9:26 AM" },
+    { type: "user", format: "photo", label: "Driver's License — Ramesh Kumar", time: "9:28 AM" },
+    { type: "agent", text: "License mil gaya, thanks! ✅", time: "9:28 AM" },
+    { type: "system", text: "📤 Intimation submitted to ICICI Lombard — Ref: ICL-CLM-88734-2026", time: "9:31 AM" },
+    { type: "agent", text: "Sharma ji, intimation file ho gayi hai ICICI Lombard ke paas. Reference number: ICL-CLM-88734-2026\n\nAb aage kya hoga:\n1️⃣ ICICI apna surveyor bhejega inspection ke liye\n2️⃣ Surveyor damage assess karega\n3️⃣ Uske baad repair authorize hoga\n\nMain sab track kar raha hoon — aapko har update milega.", time: "9:32 AM" },
+    { type: "user", text: "kitna time lagega repair start hone mein?", time: "9:35 AM" },
+    { type: "agent", text: "Normally surveyor 2-3 din mein aata hai, uske baad report 3-4 din. Total around 7-10 din mein repair start ho sakta hai.\n\nBut main push kar raha hoon ki jaldi ho — aapka machine idle hai toh revenue loss ho raha hai, ye main insurer ko bhi communicate karunga.\n\nEk suggestion — JCB authorized service center use karna best rahega. Cashless claim hoga, aapko apni jeb se kuch nahi dena padega.", time: "9:36 AM" },
+    { type: "user", text: "ok bhai.. thanks. update dete rehna", time: "9:38 AM" },
+    { type: "agent", text: "Bilkul! Har step pe update dunga. Aap aaram se kaam dekhiye, claim ki tension humpe chhod dijiye. 🤝", time: "9:38 AM" },
+    { type: "date", text: "March 25, 2026" },
+    { type: "system", variant: "success", text: "✅ Surveyor appointed — Mr. R.K. Mohanty, ICICI Lombard panel surveyor", time: "10:00 AM" },
+    { type: "agent", text: "Sharma ji, good news! Surveyor appoint ho gaya hai — Mr. R.K. Mohanty aayenge inspection ke liye.\n\n📅 Inspection: March 27, 10:30 AM\n📍 Location: Whitefield construction site\n\nPlease ensure ki machine wahi rakhi rahe aur move mat kariyega. Surveyor ko exactly waisi condition mein dekhni hai jaise incident ke baad thi.\n\nKoi bhi temporary repair mat karwayiyega abhi.", time: "10:02 AM" },
+    { type: "user", text: "ok machine wahi hai.. koi hila nahi hai", time: "10:15 AM" },
+    { type: "agent", text: "Perfect. 27 March ko ek din pehle aapko reminder de dunga. 👍", time: "10:16 AM" },
+    { type: "date", text: "March 26, 2026" },
+    { type: "agent", text: "🔔 Reminder: Kal surveyor aa raha hai\n\n📅 March 27, 10:30 AM — Whitefield site\n👤 Mr. R.K. Mohanty\n\nPlease koi aapki taraf se site pe hona chahiye — driver ya supervisor jo incident ke time tha. Surveyor unse baat karega.\n\nAur ek kaam — agar site ka koi CCTV footage hai toh wo bhi ready rakhiye, bahut helpful hoga.", time: "9:00 AM" },
+    { type: "user", text: "theek hai ramesh rahega waha. cctv nahi hai site pe 😕", time: "9:10 AM" },
+    { type: "agent", text: "No problem — photos jo bheje the woh strong evidence hain. Ramesh ko bol dijiye surveyor ko ache se explain kare kaise hua tha.\n\nAll the best for tomorrow! Main inspection ke baad update dunga. 🤞", time: "9:11 AM" },
+  ],
+  "CLM-2026-0042": [
+    { type: "date", text: "March 26, 2026" },
+    { type: "user", format: "voice", duration: "0:41", text: "", time: "6:48 AM" },
+    { type: "agent", text: "Hello! Maine aapka message suna. Bahut bura hua — Tata Signa tipper ka accident NH-16 pe hua hai. Divider se takraya hai, front axle damage, cabin dented.\n\nSabse pehle — driver theek hai? Koi injury?", time: "6:49 AM" },
+    { type: "user", text: "driver ko thodi chot aayi hai.. haath mein. hospital le gaye hain abhi. gaadi road pe hi khadi hai", time: "6:50 AM" },
+    { type: "agent", text: "Driver ka dhyan rakhiye pehle. 🙏\n\nMain claim process shuru karta hoon. Kuch important baatein:\n\n⚠️ FIR ZAROOR FILE KAREIN — Ye NH pe hua hai aur highway divider (sarkari property) damage hui hai. Bina FIR ke insurer claim reject kar dega.\n\nKya driver ya koi aur FIR file kar sakta hai aaj?", time: "6:50 AM" },
+    { type: "user", text: "haan bhai mein khud jaunga thane.. lekin pehle gaadi ka kya kare? tow karwa lein?", time: "6:52 AM" },
+    { type: "agent", text: "⚠️ Gaadi ko abhi move MAT kijiye!\n\nFront axle damage hai — gaadi chalane se aur zyada damage hoga, aur insurer dispute kar sakta hai ki damage drive karne se hua.\n\nTow karwayiye — lekin authorized service center tak. Main Tata Motors authorized center ka address bhejta hoon.\n\nPehle — damage ke photos bhejiye abhi jo bhi le sakte hain. Gaadi ke, divider ke, road ke — sab kuch.", time: "6:53 AM" },
+    { type: "user", format: "photos", count: 12, label: "Accident photos — Tata Signa + divider", time: "6:55 AM" },
+    { type: "agent", text: "12 photos mil gaye. Damage clearly visible hai — front axle, cabin damage, aur divider bhi dikha diya aapne. Very good. 👍\n\nMain ICICI — sorry, Bajaj Allianz ko intimation bhej raha hoon abhi.\n\n📋 Confirmed details:\n• Vehicle: Tata Signa 4825.TK — OD-14-AB-3391\n• Policy: Bajaj Allianz (BA-CV-2026-11205)\n• Equifi Loan: Active, 22 months remaining\n• Estimated damage: ₹3,85,000+", time: "6:57 AM" },
+    { type: "system", text: "📤 Intimation submitted to Bajaj Allianz — awaiting acknowledgment", time: "7:15 AM" },
+    { type: "agent", text: "Intimation ho gayi hai Bajaj Allianz ko. Ab important next steps:\n\n1️⃣ FIR file kijiye — nearest police station, aaj hi\n2️⃣ FIR ki copy ka photo bhej dijiye mujhe\n3️⃣ Gaadi ko tow karke authorized center le jaayiye\n4️⃣ Highway divider ka alag se photo — NHAI claim ke liye chahiye hoga\n\nEk baat aur — ₹3.85 lakh ka claim hai aur Equifi loan active hai. Aapke relationship manager ko bhi inform kar diya hai. Agar EMI mein koi issue aaye toh wo help karenge.", time: "7:18 AM" },
+    { type: "user", text: "ok bhai.. thane ja raha hoon abhi. baad mein bhejta hoon FIR", time: "7:25 AM" },
+    { type: "agent", text: "Perfect. FIR milte hi main aage ka process fast-track karunga. Take care! 🙏", time: "7:26 AM" },
+  ],
+  "CLM-2026-0038": [
+    { type: "date", text: "March 15, 2026" },
+    { type: "user", text: "hello.. meri dost gaadi ko peeche se maara kisi ne toll pe. tailgate toot gaya aur cargo bed damage", time: "2:30 PM" },
+    { type: "agent", text: "Hello! Sorry to hear this. Let me pull up your details...\n\n✅ Found: Ashok Leyland Dost+ — OD-05-CD-9987\nInsurer: HDFC ERGO\nPolicy: HE-CV-2025-56291\n\nKoi injured toh nahi hua? Aur doosri gaadi ka number mila?", time: "2:31 PM" },
+    { type: "user", text: "nahi koi injured nahi.. doosri gaadi bhag gayi lekin toll ka camera hai", time: "2:33 PM" },
+    { type: "agent", text: "Achha — toh FIR zaroor file kijiye. Toll camera footage se doosri gaadi ka number milega. Unke insurer se recovery ho sakti hai.\n\nAbhi photos bhejiye — tailgate aur cargo bed damage ke.", time: "2:34 PM" },
+    { type: "user", format: "photos", count: 5, label: "Damage photos — Dost+ tailgate", time: "2:40 PM" },
+    { type: "system", text: "📤 Intimation submitted to HDFC ERGO", time: "3:10 PM" },
+    { type: "date", text: "March 16, 2026" },
+    { type: "system", variant: "success", text: "✅ Surveyor appointed — Mr. S. Behera", time: "11:00 AM" },
+    { type: "date", text: "March 20, 2026" },
+    { type: "system", variant: "success", text: "✅ Repair authorized — ₹78,000 (cashless at AL Service Center, Patia)", time: "12:00 PM" },
+    { type: "agent", text: "Good news! HDFC ERGO ne repair authorize kar diya — ₹78,000 cashless.\n\nAshok Leyland authorized service center, Patia mein le jaayiye. Wahan pe aapko kuch pay nahi karna padega.\n\nGate pass bhi generate kar diya hai transport ke liye.", time: "12:05 PM" },
+    { type: "date", text: "March 22, 2026" },
+    { type: "user", text: "gaadi service center pe hai.. bol rahe hain 5-6 din lagenge", time: "3:00 PM" },
+    { type: "agent", text: "Great, toh around March 28 tak ready honi chahiye. Main service center se bhi check karta rahunga.\n\nRepair complete hote hi final invoice aayega aur claim settle ho jayega. Almost done! 🎉", time: "3:05 PM" },
+  ],
+  "CLM-2026-0035": [
+    { type: "date", text: "February 28, 2026" },
+    { type: "user", text: "sharma ji ka excavator kharab ho gaya quarry pe.. bucket tooth toot gaya aur track bhi damage", time: "11:00 AM" },
+    { type: "agent", text: "Namaste! Komatsu PC210 — OD-02-BQ-5521, right?\n\nMain details pull karta hoon aur claim start karta hoon. Photos bhejiye damage ke.", time: "11:02 AM" },
+    { type: "system", text: "📤 Intimation submitted to ICICI Lombard", time: "11:30 AM" },
+    { type: "date", text: "March 7, 2026" },
+    { type: "system", variant: "success", text: "✅ Repair authorized — cashless at Komatsu dealer", time: "11:00 AM" },
+    { type: "date", text: "March 14, 2026" },
+    { type: "system", variant: "success", text: "✅ Repair completed — Komatsu PC210 operational", time: "4:00 PM" },
+    { type: "date", text: "March 18, 2026" },
+    { type: "system", variant: "success", text: "✅ Claim settled — ₹95,400 (after ₹16,600 depreciation)", time: "12:00 PM" },
+    { type: "agent", text: "Sharma ji, claim settle ho gaya! 🎉\n\n💰 Total claim: ₹1,12,000\n📉 Depreciation: ₹16,600 (14.8%)\n✅ Settlement: ₹95,400\n\nAmount aapke account mein aa jayega 2-3 working days mein. Machine already operational hai.\n\nTotal turnaround: 18 din — pretty smooth! Koi aur help chahiye toh bataiye.", time: "12:05 PM" },
+    { type: "user", text: "bahut badiya bhai! thanks for handling 🙏", time: "12:30 PM" },
+  ],
+};
+
+// ═══════════════════════════════════════════════
+//  ROLE SWITCHING
+// ═══════════════════════════════════════════════
+let currentView = "claimant";
+let selectedClaimIdx = 0;
+let selectedChatClaim = "CLM-2026-0041";
+
+document.querySelectorAll(".role-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".role-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    currentView = btn.dataset.view;
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    document.getElementById("view-" + currentView).classList.add("active");
+  });
+});
+
+// ═══════════════════════════════════════════════
+//  CLAIMANT VIEW — Chat
+// ═══════════════════════════════════════════════
+
+function generateWaveformBars() {
+  const heights = [];
+  for (let i = 0; i < 28; i++) {
+    heights.push(4 + Math.floor(Math.random() * 20));
+  }
+  return heights;
+}
+
+function renderVoiceNote(duration) {
+  const bars = generateWaveformBars();
+  return `<div class="voice-note">
+    <button class="voice-play">▶</button>
+    <div class="voice-waveform">${bars.map(h => `<div class="bar" style="height:${h}px"></div>`).join("")}</div>
+    <span class="voice-duration">${duration}</span>
+  </div>`;
+}
+
+function renderPhotoMessage(label, count) {
+  if (count && count > 1) {
+    return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">
+      ${Array.from({length: Math.min(count, 4)}, (_, i) => `<div class="msg-photo" style="width:100%;height:80px;">
+        <span class="photo-icon">📷</span>
+        ${i === 3 && count > 4 ? `<div style="position:absolute;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;border-radius:8px;">+${count - 4}</div>` : ""}
+      </div>`).join("")}
+    </div>
+    <div style="font-size:11px;color:var(--text-secondary);margin-top:2px;">${label} — ${count} photos</div>`;
+  }
+  return `<div class="msg-photo">
+    <span class="photo-icon">📷</span>
+    <span class="photo-label">${label}</span>
+  </div>`;
+}
+
+function renderChat(claimId) {
+  selectedChatClaim = claimId;
+  const messages = CHAT_DATA[claimId] || [];
+  const container = document.getElementById("chatMessages");
+  container.innerHTML = "";
+
+  messages.forEach(msg => {
+    if (msg.type === "date") {
+      const div = document.createElement("div");
+      div.className = "chat-date-divider";
+      div.innerHTML = `<span>${msg.text}</span>`;
+      container.appendChild(div);
+      return;
+    }
+
+    if (msg.type === "system") {
+      const div = document.createElement("div");
+      div.className = "msg system" + (msg.variant === "success" ? " success" : "");
+      div.innerHTML = `${msg.text}<div class="msg-time">${msg.time}</div>`;
+      container.appendChild(div);
+      return;
+    }
+
+    const div = document.createElement("div");
+    div.className = `msg ${msg.type}`;
+
+    let content = "";
+    if (msg.format === "voice") {
+      content = renderVoiceNote(msg.duration);
+    } else if (msg.format === "photos") {
+      content = renderPhotoMessage(msg.label, msg.count);
+    } else if (msg.format === "photo") {
+      content = renderPhotoMessage(msg.label);
+    } else if (msg.format === "doc") {
+      content = `<div class="msg-doc">
+        <div class="msg-doc-icon">PDF</div>
+        <div class="msg-doc-info">
+          <div class="msg-doc-name">${msg.docName}</div>
+          <div class="msg-doc-size">${msg.docSize}</div>
+        </div>
+      </div>`;
+    } else {
+      content = msg.text.replace(/\n/g, "<br>");
+    }
+
+    div.innerHTML = content + `<div class="msg-time">${msg.time}</div>`;
+    container.appendChild(div);
+  });
+
+  container.scrollTop = container.scrollHeight;
+
+  // Update tabs
+  document.querySelectorAll(".claim-tab").forEach(t => {
+    t.classList.toggle("active", t.dataset.claim === claimId);
+  });
+}
+
+function initClaimantView() {
+  const tabsEl = document.getElementById("claimTabs");
+  tabsEl.innerHTML = CLAIMS.map(c =>
+    `<button class="claim-tab${c.id === selectedChatClaim ? " active" : ""}" data-claim="${c.id}">${c.vehicle.split(" ")[0]} ${c.reg.slice(-4)}</button>`
+  ).join("");
+
+  tabsEl.querySelectorAll(".claim-tab").forEach(tab => {
+    tab.addEventListener("click", () => renderChat(tab.dataset.claim));
+  });
+
+  renderChat(selectedChatClaim);
+}
+
+// ═══════════════════════════════════════════════
+//  OPERATIONS VIEW
+// ═══════════════════════════════════════════════
+
+function renderOpsClaimList() {
+  const list = document.getElementById("opsClaimList");
+  list.innerHTML = CLAIMS.map((c, i) => {
+    const statusClass = { new: "status-new", progress: "status-progress", near: "status-near", resolved: "status-resolved" }[c.status];
+    return `<div class="ops-claim-item${i === selectedClaimIdx ? " active" : ""}" data-idx="${i}">
+      <div class="ops-claim-item-top">
+        <div>
+          <div class="ops-claim-vehicle">${c.vehicle}</div>
+          <div class="ops-claim-reg">${c.reg} · ${c.id}</div>
+        </div>
+        <span class="status-badge ${statusClass}">${c.statusLabel}</span>
+      </div>
+      <div class="ops-claim-owner">${c.owner}, ${c.ownerCity}</div>
+      <div class="ops-claim-bottom">
+        <span class="ops-claim-amount">${c.estimatedDamage}</span>
+        <span style="font-size:11px;color:var(--text-tertiary)">${c.filedShort}</span>
+      </div>
+    </div>`;
+  }).join("");
+
+  list.querySelectorAll(".ops-claim-item").forEach(item => {
+    item.addEventListener("click", () => {
+      selectedClaimIdx = parseInt(item.dataset.idx);
+      renderOpsClaimList();
+      renderOpsMain();
+    });
+  });
+}
+
+function renderOpsMain() {
+  const c = CLAIMS[selectedClaimIdx];
+  const main = document.getElementById("opsMain");
+
+  const docStatusIcon = { done: "✓", pending: "⏳", missing: "✕" };
+  const docStatusClass = { done: "done", pending: "pending", missing: "missing" };
+  const integrationClass = { crm: "crm", loan: "loan", acct: "acct", gate: "gate" };
+  const integrationIcon = { crm: "⚡", loan: "🏦", acct: "📊", gate: "🚪" };
+
+  main.innerHTML = `
+    <div class="ops-section">
+      <div class="ops-section-title">Claim Summary</div>
+      <div class="claim-summary-card">
+        <div class="claim-summary-grid">
+          <div class="claim-summary-field"><label>Vehicle</label><div class="value">${c.vehicle}</div></div>
+          <div class="claim-summary-field"><label>Registration</label><div class="value">${c.reg}</div></div>
+          <div class="claim-summary-field"><label>Owner</label><div class="value">${c.owner}, ${c.ownerCity}</div></div>
+          <div class="claim-summary-field"><label>Insurer</label><div class="value">${c.insurer}</div></div>
+          <div class="claim-summary-field"><label>Policy</label><div class="value">${c.policy}</div></div>
+          <div class="claim-summary-field"><label>Estimated Damage</label><div class="value highlight">${c.estimatedDamage}</div></div>
+          <div class="claim-summary-field"><label>Filed</label><div class="value">${c.filed}</div></div>
+          <div class="claim-summary-field"><label>Loan Status</label><div class="value">${c.loanStatus}</div></div>
+          <div class="claim-summary-field"><label>Status</label><div class="value">${c.statusLabel}${c.resolved ? " — " + c.resolved : ""}</div></div>
+        </div>
+        <div class="claim-summary-incident">
+          <label>Incident</label>
+          <p>${c.incident}</p>
+        </div>
+        ${c.settlement ? `<div class="claim-summary-incident"><label>Settlement</label><p>${c.settlement} (Claimed: ${c.estimatedDamage})</p></div>` : ""}
+      </div>
+    </div>
+
+    <div class="ops-two-col">
+      <div class="ops-section">
+        <div class="ops-section-title">Document Checklist</div>
+        <div class="doc-checklist">
+          ${c.documents.map(d => `<div class="doc-item">
+            <div class="doc-status ${docStatusClass[d.status]}">${docStatusIcon[d.status]}</div>
+            <span class="doc-name">${d.name}</span>
+            <span class="doc-note">${d.note}</span>
+          </div>`).join("")}
+        </div>
+      </div>
+
+      <div class="ops-section">
+        <div class="ops-section-title">Deadlines</div>
+        <div class="deadline-tracker">
+          ${c.deadlines.map(d => `<div class="deadline-item">
+            <span class="deadline-label">${d.label}</span>
+            <span class="deadline-date">${d.date}</span>
+            <span class="deadline-status deadline-${d.status}">${d.statusText}</span>
+          </div>`).join("")}
+        </div>
+      </div>
+    </div>
+
+    <div class="ops-section">
+      <div class="ops-section-title">Timeline</div>
+      <div class="timeline">
+        ${c.timeline.map((t, i) => `<div class="timeline-item">
+          <div class="timeline-dot-col">
+            <div class="timeline-dot${t.active ? "" : " inactive"}"></div>
+            ${i < c.timeline.length - 1 ? '<div class="timeline-line"></div>' : ""}
+          </div>
+          <div class="timeline-content">
+            <div class="timeline-event">${t.event}</div>
+            <div class="timeline-meta">${t.time}</div>
+          </div>
+        </div>`).join("")}
+      </div>
+    </div>
+
+    <div class="ops-two-col">
+      <div class="ops-section">
+        <div class="ops-section-title">Equifi Integration Log</div>
+        <div class="integration-log">
+          ${c.integrations.map(ig => `<div class="integration-item">
+            <div class="integration-icon ${integrationClass[ig.type]}">${integrationIcon[ig.type]}</div>
+            <span class="integration-text">${ig.text}</span>
+            <span class="integration-time">${ig.time}</span>
+          </div>`).join("")}
+        </div>
+      </div>
+
+      <div class="ops-section">
+        <div class="ops-section-title">Agent Reasoning</div>
+        <div class="reasoning-log">
+          ${c.reasoning.map(r => `<div class="reasoning-item">
+            <div class="reasoning-decision">${r.decision}</div>
+            <div class="reasoning-why">${r.why}</div>
+          </div>`).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════
+//  MANAGEMENT VIEW
+// ═══════════════════════════════════════════════
+
+function renderManagement() {
+  const container = document.getElementById("mgmtContainer");
+
+  const activeClaims = CLAIMS.filter(c => c.status !== "resolved");
+  const totalClaimValue = CLAIMS.reduce((s, c) => s + c.estimatedDamageNum, 0);
+  const totalSettled = CLAIMS.reduce((s, c) => s + c.settlementNum, 0);
+  const onTrack = activeClaims.filter(c => !c.deadlines.some(d => d.status === "red")).length;
+
+  container.innerHTML = `
+    <div class="mgmt-header">
+      <h1>Claims Overview</h1>
+      <p>Portfolio snapshot — March 2026</p>
+    </div>
+
+    <div class="summary-cards">
+      <div class="summary-card">
+        <div class="summary-card-label">Active Claims</div>
+        <div class="summary-card-value">3</div>
+        <div class="summary-card-sub">1 resolved this month</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-label">Avg Resolution Time</div>
+        <div class="summary-card-value">18 <span style="font-size:14px;font-weight:500;color:var(--text-secondary)">days</span></div>
+        <div class="summary-card-sub">Based on resolved claims</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-label">Total Claim Value</div>
+        <div class="summary-card-value accent">₹8.15L</div>
+        <div class="summary-card-sub">4 claims, Mar 2026</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-label">Claims On Track</div>
+        <div class="summary-card-value" style="color:var(--green)">${onTrack}/3</div>
+        <div class="summary-card-sub">Meeting all IRDAI deadlines</div>
+      </div>
+    </div>
+
+    <div class="mgmt-grid">
+      <div class="mgmt-card">
+        <div class="mgmt-card-title">Claims by Status</div>
+        <div class="status-breakdown">
+          <div class="status-row">
+            <span class="status-row-label">New</span>
+            <div class="status-bar-track"><div class="status-bar-fill new" style="width:25%">1</div></div>
+            <span class="status-row-count">1</span>
+          </div>
+          <div class="status-row">
+            <span class="status-row-label">In Progress</span>
+            <div class="status-bar-track"><div class="status-bar-fill progress" style="width:25%">1</div></div>
+            <span class="status-row-count">1</span>
+          </div>
+          <div class="status-row">
+            <span class="status-row-label">Near Resolution</span>
+            <div class="status-bar-track"><div class="status-bar-fill near" style="width:25%">1</div></div>
+            <span class="status-row-count">1</span>
+          </div>
+          <div class="status-row">
+            <span class="status-row-label">Resolved</span>
+            <div class="status-bar-track"><div class="status-bar-fill resolved" style="width:25%">1</div></div>
+            <span class="status-row-count">1</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mgmt-card">
+        <div class="mgmt-card-title">Fleet Risk — Claims by Owner</div>
+        <table class="fleet-risk-table">
+          <thead><tr><th>Owner</th><th>Claims</th><th>Total Value</th><th>Active Loans</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Sharma Transport & Const.</strong></td><td>2</td><td>₹3,52,000</td><td>2</td></tr>
+            <tr><td>Patel Infrastructure</td><td>1</td><td>₹3,85,000</td><td>1</td></tr>
+            <tr><td>Krishna Logistics</td><td>1</td><td>₹78,000</td><td>0</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="mgmt-grid">
+      <div class="mgmt-card">
+        <div class="mgmt-card-title">Monthly Claim Volume</div>
+        <div class="bar-chart">
+          <div class="bar-col">
+            <div class="bar-value">1</div>
+            <div class="bar-rect" style="height:20%;background:var(--border);"></div>
+            <div class="bar-label">Oct</div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-value">2</div>
+            <div class="bar-rect" style="height:40%;background:var(--border);"></div>
+            <div class="bar-label">Nov</div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-value">0</div>
+            <div class="bar-rect" style="height:2%;background:var(--border);"></div>
+            <div class="bar-label">Dec</div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-value">1</div>
+            <div class="bar-rect" style="height:20%;background:var(--border);"></div>
+            <div class="bar-label">Jan</div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-value">2</div>
+            <div class="bar-rect" style="height:40%;background:var(--border);"></div>
+            <div class="bar-label">Feb</div>
+          </div>
+          <div class="bar-col">
+            <div class="bar-value">4</div>
+            <div class="bar-rect" style="height:80%;background:var(--accent);"></div>
+            <div class="bar-label">Mar</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mgmt-card">
+        <div class="mgmt-card-title">Cost Summary</div>
+        <div class="cost-grid">
+          <div class="cost-item">
+            <label>Total Claimed</label>
+            <div class="cost-val">₹8.15L</div>
+            <div class="cost-note">4 claims</div>
+          </div>
+          <div class="cost-item">
+            <label>Total Settled</label>
+            <div class="cost-val">₹0.95L</div>
+            <div class="cost-note">1 claim resolved</div>
+          </div>
+          <div class="cost-item">
+            <label>Depreciation Impact</label>
+            <div class="cost-val">₹16,600</div>
+            <div class="cost-note">14.8% on resolved claim</div>
+          </div>
+          <div class="cost-item">
+            <label>Outstanding</label>
+            <div class="cost-val" style="color:var(--amber)">₹7.03L</div>
+            <div class="cost-note">3 claims pending</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mgmt-grid">
+      <div class="mgmt-card">
+        <div class="mgmt-card-title">SLA Compliance</div>
+        <div class="sla-grid">
+          <div class="sla-item">
+            <div class="sla-pct green">100%</div>
+            <div class="sla-label">Intimation within 24 hrs</div>
+          </div>
+          <div class="sla-item">
+            <div class="sla-pct green">100%</div>
+            <div class="sla-label">Surveyor within 72 hrs</div>
+          </div>
+          <div class="sla-item">
+            <div class="sla-pct green">100%</div>
+            <div class="sla-label">IRDAI 30-day settlement</div>
+          </div>
+          <div class="sla-item">
+            <div class="sla-pct green">75%</div>
+            <div class="sla-label">Docs complete at filing</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mgmt-card">
+        <div class="mgmt-card-title">Equifi Loan Exposure</div>
+        <table class="fleet-risk-table">
+          <thead><tr><th>Metric</th><th>Value</th></tr></thead>
+          <tbody>
+            <tr><td>Claims with active loans</td><td><strong>3 of 4</strong></td></tr>
+            <tr><td>Total loan exposure</td><td><strong>₹7.03L</strong> (est. claim value)</td></tr>
+            <tr><td>Avg remaining tenure</td><td><strong>14.7 months</strong></td></tr>
+            <tr><td>EMI default risk</td><td><span style="color:var(--green);font-weight:600;">Low</span> — all current</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+
+initClaimantView();
+renderOpsClaimList();
+renderOpsMain();
+renderManagement();
+
+</script>
+</body>
+</html>
