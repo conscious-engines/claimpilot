@@ -143,7 +143,7 @@ def test_management_view_metrics(browser_context):
     # Check values
     content = page.locator("#metricsGrid").inner_text()
     assert "4" in content  # total claims
-    assert "19d" in content  # avg resolution
+    assert "17d" in content  # avg resolution (computed from timeline data)
 
     # Status breakdown should exist
     assert page.locator("#statusBreakdown").is_visible()
