@@ -80,37 +80,109 @@ body {
   margin-left: 8px;
 }
 
-.role-switcher {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 8px;
-  padding: 3px;
+/* ── Mercury-style Role Selector ── */
+.role-selector-wrapper {
+  position: relative;
 }
 
-.role-btn {
-  padding: 7px 16px;
-  border: none;
-  background: transparent;
-  color: rgba(255,255,255,0.6);
+.role-selector {
+  position: relative;
+}
+
+.role-selector-label {
+  font-size: 11px;
+  color: rgba(255,255,255,0.45);
+  margin-right: 8px;
+}
+
+.role-selector-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  color: #fff;
   font-family: var(--font);
-  font-size: 13px;
-  font-weight: 500;
-  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
-  white-space: nowrap;
 }
 
-.role-btn:hover {
-  color: rgba(255,255,255,0.85);
-  background: rgba(255,255,255,0.06);
+.role-selector-btn:hover {
+  background: rgba(255,255,255,0.15);
+  border-color: rgba(255,255,255,0.25);
 }
 
-.role-btn.active {
-  background: var(--accent);
-  color: #fff;
+.role-selector-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.role-selector.open .role-selector-btn svg {
+  transform: rotate(180deg);
+}
+
+.role-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md), 0 8px 24px rgba(0,0,0,0.12);
+  min-width: 280px;
+  padding: 6px;
+  z-index: 200;
+}
+
+.role-selector.open .role-dropdown {
+  display: block;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font);
+  transition: background 0.1s ease;
+}
+
+.role-option:hover {
+  background: var(--surface-secondary);
+}
+
+.role-option.active {
+  background: var(--accent-light);
+}
+
+.role-option-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+  width: 32px;
+  text-align: center;
+}
+
+.role-option-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.role-option-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 1px;
 }
 
 .banner-right {
@@ -127,49 +199,6 @@ body {
 /* ── Views ── */
 .view { display: none; }
 .view.active { display: block; }
-
-/* ═══════════════════════════════════════
-   SPLIT-SCREEN LAYOUT (default for Claimant)
-   ═══════════════════════════════════════ */
-.split-view {
-  display: none;
-}
-
-.split-view.active {
-  display: flex;
-  height: calc(100vh - 56px);
-}
-
-.split-panel-left {
-  width: 45%;
-  min-width: 360px;
-  overflow-y: auto;
-  border-right: 1px solid var(--border);
-}
-
-.split-panel-right {
-  flex: 1;
-  overflow-y: auto;
-  background: var(--bg);
-}
-
-/* Chat container in split view */
-.split-panel-left .chat-container {
-  max-width: 100%;
-  height: 100%;
-  border-left: none;
-  border-right: none;
-}
-
-/* Ops container in split view */
-.split-panel-right .ops-container {
-  max-width: 100%;
-  padding: 24px 20px;
-}
-
-.split-panel-right .claims-grid {
-  grid-template-columns: 1fr;
-}
 
 /* ═══════════════════════════════════════
    CLAIMANT VIEW (CHAT)
@@ -1098,37 +1127,13 @@ body {
 }
 
 /* ── Responsive ── */
-@media (max-width: 900px) {
-  .split-view.active {
-    flex-direction: column;
-    height: auto;
-  }
-
-  .split-panel-left {
-    width: 100%;
-    min-width: unset;
-    height: 60vh;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-
-  .split-panel-right {
-    width: 100%;
-  }
-
-  .split-panel-left .chat-container {
-    height: 100%;
-  }
-}
-
 @media (max-width: 600px) {
   .claims-grid { grid-template-columns: 1fr; }
   .metrics-grid { grid-template-columns: 1fr 1fr; }
   .ops-container, .mgmt-container { padding: 20px 16px; }
 
-  .split-panel-left {
-    height: 50vh;
-  }
+  .role-selector-label { display: none; }
+  .role-dropdown { min-width: 240px; left: 0; transform: none; }
 
   .email-from, .email-to {
     max-width: 120px;

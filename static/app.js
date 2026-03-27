@@ -37,69 +37,46 @@ function formatEmailTime(ts) {
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', async () => {
-  setupRoleSwitcher();
+  setupRoleSelector();
   await loadClaims();
   setupChat();
-  renderSplitOpsPanel();
 });
 
-// ── Role Switcher ──
-function setupRoleSwitcher() {
-  const btns = document.querySelectorAll('.role-btn');
-  btns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      btns.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      const role = btn.dataset.role;
+// ── Mercury-style Role Selector ──
+function setupRoleSelector() {
+  const selector = document.getElementById('roleSelector');
+  const btn = document.getElementById('roleSelectorBtn');
+  const dropdown = document.getElementById('roleDropdown');
+  const textEl = document.getElementById('roleSelectorText');
+  const options = document.querySelectorAll('.role-option');
 
-      // Hide everything first
-      document.getElementById('splitView').classList.remove('active');
+  // Toggle dropdown
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    selector.classList.toggle('open');
+  });
+
+  // Close on outside click
+  document.addEventListener('click', () => {
+    selector.classList.remove('open');
+  });
+  dropdown.addEventListener('click', (e) => e.stopPropagation());
+
+  // Handle option selection
+  options.forEach(opt => {
+    opt.addEventListener('click', () => {
+      options.forEach(o => o.classList.remove('active'));
+      opt.classList.add('active');
+      textEl.textContent = opt.querySelector('.role-option-name').textContent;
+      selector.classList.remove('open');
+
+      const role = opt.dataset.role;
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-
-      if (role === 'claimant') {
-        document.getElementById('splitView').classList.add('active');
-        renderSplitOpsPanel();
-      } else if (role === 'operations') {
-        document.getElementById('view-operations').classList.add('active');
-        renderOperations();
-      } else if (role === 'management') {
-        document.getElementById('view-management').classList.add('active');
-        renderManagement();
-      }
+      document.getElementById(`view-${role}`).classList.add('active');
+      if (role === 'operations') renderOperations();
+      if (role === 'management') renderManagement();
     });
   });
-}
-
-// ── Split-screen Ops Panel (right side) ──
-async function renderSplitOpsPanel() {
-  const panel = document.getElementById('splitPanelRight');
-  if (!panel) return;
-
-  panel.innerHTML = `
-    <div class="ops-container">
-      <h2>Operations Dashboard</h2>
-      <p class="ops-subtitle">Active claims and system integrations</p>
-      <div class="claims-grid" id="splitClaimsGrid"></div>
-      <div class="timeline-section">
-        <h3>Integration Activity Log</h3>
-        <div class="timeline-list" id="splitTimelineList"></div>
-      </div>
-    </div>
-  `;
-
-  try {
-    const res = await fetch(`${API}/api/claims`);
-    const claimsData = await res.json();
-    const grid = document.getElementById('splitClaimsGrid');
-    const list = document.getElementById('splitTimelineList');
-    if (grid && list) {
-      await renderClaimsGridInto(claimsData, grid);
-      renderTimelineInto(claimsData, list);
-    }
-  } catch (e) {
-    const grid = document.getElementById('splitClaimsGrid');
-    if (grid) grid.innerHTML = '<p>Failed to load claims.</p>';
-  }
 }
 
 // ── Load Claims ──
@@ -420,26 +397,6 @@ function triggerIntegrationPulse(claimId) {
     });
   });
 
-  // Refresh the split ops panel after each interaction
-  renderSplitOpsPanel().then(() => {
-    setTimeout(() => {
-      const freshCards = document.querySelectorAll(`#splitClaimsGrid .claim-card[data-claim-id="${claimId}"]`);
-      freshCards.forEach(card => {
-        const chips = card.querySelectorAll('.integration-chip');
-        chips.forEach((chip, i) => {
-          setTimeout(() => {
-            chip.classList.add('pulse');
-            setTimeout(() => chip.classList.remove('pulse'), 1200);
-          }, i * 300);
-        });
-      });
-    }, 100);
-  });
-}
-
-// ── Refresh emails in split ops panel ──
-function refreshSplitOpsEmails() {
-  renderSplitOpsPanel();
 }
 
 // ── Email Trail Rendering ──

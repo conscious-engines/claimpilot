@@ -3,8 +3,15 @@
 import pytest
 
 
+def _switch_role(page, role):
+    """Switch to a role using the Mercury-style dropdown."""
+    page.locator("#roleSelectorBtn").click()
+    page.locator(f'.role-option[data-role="{role}"]').click()
+    page.wait_for_timeout(300)
+
+
 def test_app_loads_and_role_switcher(browser_context):
-    """App loads, role switcher renders all 3 views."""
+    """App loads, role selector renders all 3 roles."""
     context, base_url = browser_context
     page = context.new_page()
     page.goto(base_url)
@@ -13,28 +20,34 @@ def test_app_loads_and_role_switcher(browser_context):
     assert page.locator(".brand").is_visible()
     assert "ClaimPilot" in page.locator(".brand").inner_text()
 
-    # Role switcher has 3 buttons
-    btns = page.locator(".role-btn")
-    assert btns.count() == 3
+    # Role selector exists
+    assert page.locator("#roleSelectorBtn").is_visible()
+    assert "Claimant" in page.locator("#roleSelectorText").inner_text()
 
-    # Split view (claimant default) is active by default
-    assert page.locator("#splitView").is_visible()
+    # Dropdown has 3 options
+    page.locator("#roleSelectorBtn").click()
+    opts = page.locator(".role-option")
+    assert opts.count() == 3
+    page.locator("#roleSelectorBtn").click()  # close
+
+    # Claimant view is active by default
+    assert page.locator("#view-claimant").is_visible()
     assert not page.locator("#view-operations").is_visible()
     assert not page.locator("#view-management").is_visible()
 
     # Switch to Operations
-    page.locator('.role-btn[data-role="operations"]').click()
+    _switch_role(page, "operations")
     assert page.locator("#view-operations").is_visible()
-    assert not page.locator("#splitView").is_visible()
+    assert not page.locator("#view-claimant").is_visible()
 
     # Switch to Management
-    page.locator('.role-btn[data-role="management"]').click()
+    _switch_role(page, "management")
     assert page.locator("#view-management").is_visible()
     assert not page.locator("#view-operations").is_visible()
 
-    # Switch back to Claimant (split view)
-    page.locator('.role-btn[data-role="claimant"]').click()
-    assert page.locator("#splitView").is_visible()
+    # Switch back to Claimant
+    _switch_role(page, "claimant")
+    assert page.locator("#view-claimant").is_visible()
 
     page.close()
 
@@ -99,7 +112,7 @@ def test_operations_view_claims(browser_context):
     page.goto(base_url)
 
     # Switch to operations
-    page.locator('.role-btn[data-role="operations"]').click()
+    _switch_role(page, "operations")
     page.wait_for_selector("#view-operations .claim-card", timeout=5000)
 
     # Should have 4 claim cards in the operations view
@@ -133,7 +146,7 @@ def test_management_view_metrics(browser_context):
     page.goto(base_url)
 
     # Switch to management
-    page.locator('.role-btn[data-role="management"]').click()
+    _switch_role(page, "management")
     page.wait_for_selector(".metric-card", timeout=5000)
 
     # Should have 4 metric cards
@@ -193,7 +206,7 @@ def test_integration_logs_in_operations(browser_context):
     page = context.new_page()
     page.goto(base_url)
 
-    page.locator('.role-btn[data-role="operations"]').click()
+    _switch_role(page, "operations")
     page.wait_for_selector("#view-operations .timeline-item", timeout=5000)
 
     # Should have timeline items
