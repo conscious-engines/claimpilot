@@ -36,6 +36,14 @@
         {"date": "2026-03-20T14:00:00", "event": "Site photos uploaded (8 images)", "type": "documentation"},
         {"date": "2026-03-26T10:30:00", "event": "Surveyor inspection scheduled for Mar 27", "type": "scheduling"}
       ],
+      "documents": {
+        "rc_copy": {"status": "received", "received_date": "2026-03-18"},
+        "dl_copy": {"status": "received", "received_date": "2026-03-18"},
+        "policy_copy": {"status": "auto_verified", "received_date": "2026-03-18"},
+        "damage_photos": {"status": "received", "count": 8, "received_date": "2026-03-20"},
+        "claim_form": {"status": "pending"},
+        "fir_copy": {"status": "not_required"}
+      },
       "integrations": {
         "crm": {"status": "synced", "last_sync": "2026-03-26T08:00:00", "record_id": "CRM-41872"},
         "loan_tracking": {"status": "flagged", "last_sync": "2026-03-18T10:00:00", "flag": "Active insurance claim"},
@@ -78,6 +86,15 @@
         {"date": "2026-03-25T10:15:00", "event": "Loan account flagged — active claim", "type": "integration"},
         {"date": "2026-03-25T11:00:00", "event": "Policy verification initiated with Bajaj Allianz", "type": "verification"}
       ],
+      "documents": {
+        "rc_copy": {"status": "pending"},
+        "dl_copy": {"status": "pending"},
+        "policy_copy": {"status": "auto_verified", "received_date": "2026-03-25"},
+        "damage_photos": {"status": "pending"},
+        "claim_form": {"status": "pending"},
+        "fir_copy": {"status": "received", "received_date": "2026-03-25"},
+        "road_accident_report": {"status": "pending"}
+      },
       "integrations": {
         "crm": {"status": "synced", "last_sync": "2026-03-25T10:01:00", "record_id": "CRM-42190"},
         "loan_tracking": {"status": "flagged", "last_sync": "2026-03-25T10:15:00", "flag": "Active insurance claim — highway accident"},
@@ -127,6 +144,15 @@
         {"date": "2026-03-22T14:00:00", "event": "Parts ordered — bumper, tailgate assembly", "type": "repair"},
         {"date": "2026-03-25T10:00:00", "event": "Parts delivery expected by Mar 28", "type": "update"}
       ],
+      "documents": {
+        "rc_copy": {"status": "received", "received_date": "2026-03-10"},
+        "dl_copy": {"status": "received", "received_date": "2026-03-10"},
+        "policy_copy": {"status": "auto_verified", "received_date": "2026-03-10"},
+        "damage_photos": {"status": "received", "count": 6, "received_date": "2026-03-11"},
+        "claim_form": {"status": "received", "received_date": "2026-03-10"},
+        "fir_copy": {"status": "received", "received_date": "2026-03-10"},
+        "repair_estimate": {"status": "received", "received_date": "2026-03-15"}
+      },
       "integrations": {
         "crm": {"status": "synced", "last_sync": "2026-03-25T10:00:00", "record_id": "CRM-41503"},
         "loan_tracking": {"status": "flagged", "last_sync": "2026-03-10T09:30:00", "flag": "Active claim — 1 EMI overdue"},
@@ -178,6 +204,14 @@
         {"date": "2026-03-18T09:00:00", "event": "Loan account flag cleared", "type": "integration"},
         {"date": "2026-03-18T09:30:00", "event": "Accounting entry posted", "type": "integration"}
       ],
+      "documents": {
+        "rc_copy": {"status": "received", "received_date": "2026-02-28"},
+        "dl_copy": {"status": "received", "received_date": "2026-02-28"},
+        "policy_copy": {"status": "auto_verified", "received_date": "2026-02-28"},
+        "damage_photos": {"status": "received", "count": 5, "received_date": "2026-03-01"},
+        "claim_form": {"status": "received", "received_date": "2026-02-28"},
+        "fir_copy": {"status": "not_required"}
+      },
       "integrations": {
         "crm": {"status": "synced", "last_sync": "2026-03-18T09:30:00", "record_id": "CRM-41102"},
         "loan_tracking": {"status": "cleared", "last_sync": "2026-03-18T09:00:00", "flag": "Claim settled"},

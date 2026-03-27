@@ -399,6 +399,58 @@ function triggerIntegrationPulse(claimId) {
 
 }
 
+// ── Document Checklist ──
+async function loadDocuments(claimId) {
+  try {
+    const res = await fetch(`${API}/api/claims/${claimId}/documents`);
+    if (res.ok) return await res.json();
+  } catch (e) {
+    console.error('Failed to load documents for', claimId, e);
+  }
+  return [];
+}
+
+function renderDocumentChecklist(docs, container) {
+  if (!docs || docs.length === 0) {
+    container.innerHTML = '<div class="doc-checklist-empty">No documents tracked</div>';
+    return;
+  }
+
+  const received = docs.filter(d => d.status === 'received' || d.status === 'auto_verified').length;
+  const applicable = docs.filter(d => d.status !== 'not_required').length;
+
+  let html = `<div class="doc-checklist-summary">${received}/${applicable} documents collected</div>`;
+  html += '<div class="doc-checklist-items">';
+  docs.forEach(d => {
+    let icon, statusCls, label;
+    if (d.status === 'received') {
+      icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      statusCls = 'doc-received';
+      label = d.count ? `${d.count} received` : 'Received';
+    } else if (d.status === 'auto_verified') {
+      icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+      statusCls = 'doc-received';
+      label = 'Auto-verified';
+    } else if (d.status === 'pending') {
+      icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+      statusCls = 'doc-pending';
+      label = 'Pending';
+    } else {
+      icon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>';
+      statusCls = 'doc-not-required';
+      label = 'N/A';
+    }
+    const shortName = d.name.length > 28 ? d.name.substring(0, 26) + '...' : d.name;
+    html += `<div class="doc-checklist-item ${statusCls}" title="${esc(d.name)}: ${esc(d.description || '')}">
+      <span class="doc-icon">${icon}</span>
+      <span class="doc-name">${esc(shortName)}</span>
+      <span class="doc-label">${esc(label)}</span>
+    </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+}
+
 // ── Email Trail Rendering ──
 async function loadEmails(claimId) {
   if (emailsCache[claimId]) return emailsCache[claimId];
@@ -468,8 +520,8 @@ async function renderClaimsGridInto(claimsData, grid) {
       return `<span class="integration-chip ${st}"><span class="dot"></span>${label}</span>`;
     }).join('');
 
-    // Load emails for this claim
-    const emails = await loadEmails(c.id);
+    // Load emails and documents for this claim
+    const [emails, docs] = await Promise.all([loadEmails(c.id), loadDocuments(c.id)]);
     const emailCount = emails.length;
 
     card.innerHTML = `
@@ -489,6 +541,7 @@ async function renderClaimsGridInto(claimsData, grid) {
         <div><div class="claim-detail-label">Surveyor</div><div class="claim-detail-value">${esc(c.surveyor || 'Pending')}</div></div>
       </div>
       <div class="integrations-row">${chipsHTML}</div>
+      <div class="doc-checklist-section" id="docChecklist-${esc(c.id)}"></div>
       <div class="email-trail-section">
         <div class="email-trail-toggle" onclick="this.parentElement.classList.toggle('open')">
           <span class="email-trail-icon">&#9993;</span>
@@ -499,6 +552,12 @@ async function renderClaimsGridInto(claimsData, grid) {
       </div>
     `;
     grid.appendChild(card);
+
+    // Render documents into the checklist container
+    const docContainer = card.querySelector(`#docChecklist-${c.id}`);
+    if (docContainer) {
+      renderDocumentChecklist(docs, docContainer);
+    }
 
     // Render emails into the trail container
     const trailContainer = card.querySelector(`#emailTrail-${c.id}`);

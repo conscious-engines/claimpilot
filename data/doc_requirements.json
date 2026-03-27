@@ -1,0 +1,15 @@
+{
+  "base_documents": [
+    {"id": "rc_copy", "name": "RC (Registration Certificate) Copy", "description": "Vehicle registration document", "required": true},
+    {"id": "dl_copy", "name": "Driving License Copy", "description": "Driver's license at time of incident", "required": true},
+    {"id": "policy_copy", "name": "Insurance Policy Copy", "description": "Current insurance policy document", "required": true},
+    {"id": "damage_photos", "name": "Damage Photos", "description": "Clear photos of all damage (minimum 4)", "required": true},
+    {"id": "claim_form", "name": "Signed Claim Form", "description": "Filled and signed claim form", "required": true}
+  ],
+  "conditional_documents": [
+    {"id": "fir_copy", "name": "FIR Copy", "condition": "fir_required", "description": "First Information Report from police station"},
+    {"id": "repair_estimate", "name": "Repair Estimate", "condition": "status_in_repair", "description": "Estimate from authorized workshop"},
+    {"id": "medical_report", "name": "Medical Report", "condition": "injury_involved", "description": "Medical report if driver/passenger injured"},
+    {"id": "road_accident_report", "name": "Road Accident Report", "condition": "highway_accident", "description": "Report from highway authority"}
+  ]
+}

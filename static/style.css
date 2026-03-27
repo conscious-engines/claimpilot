@@ -1060,6 +1060,77 @@ body {
 }
 
 /* ═══════════════════════════════════════
+   DOCUMENT CHECKLIST
+   ═══════════════════════════════════════ */
+.doc-checklist-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-light);
+}
+
+.doc-checklist-summary {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.doc-checklist-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.doc-checklist-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 14px;
+  font-size: 11px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.doc-checklist-item.doc-received {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.doc-checklist-item.doc-pending {
+  background: var(--amber-bg);
+  color: var(--amber);
+}
+
+.doc-checklist-item.doc-not-required {
+  background: var(--surface-secondary);
+  color: var(--text-tertiary);
+}
+
+.doc-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.doc-name {
+  white-space: nowrap;
+}
+
+.doc-label {
+  font-size: 10px;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.doc-checklist-empty {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-style: italic;
+  padding: 4px 0;
+}
+
+/* ═══════════════════════════════════════
    EMAIL TRAIL
    ═══════════════════════════════════════ */
 .email-trail-section {

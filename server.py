@@ -29,14 +29,17 @@ UPLOADS_DIR.mkdir(exist_ok=True)
 claims_cache: list[dict] = []
 conversations: dict[str, list[dict]] = {}
 emails: dict[str, list[dict]] = {}
+doc_requirements: dict = {}
 
 @asynccontextmanager
 async def lifespan(app):
-    global claims_cache, conversations, emails
+    global claims_cache, conversations, emails, doc_requirements
     with open(DATA_DIR / "claims.json") as f:
         claims_cache = json.load(f)["claims"]
     with open(DATA_DIR / "conversations.json") as f:
         conversations = json.load(f)
+    with open(DATA_DIR / "doc_requirements.json") as f:
+        doc_requirements = json.load(f)
     emails_file = DATA_DIR / "emails.json"
     if emails_file.exists():
         with open(emails_file) as f:
@@ -81,6 +84,146 @@ def get_claim(claim_id: str):
         if c["id"] == claim_id:
             return c
     raise HTTPException(404, "Claim not found")
+
+
+def _build_document_checklist(claim: dict) -> list[dict]:
+    """Build full document checklist for a claim, merging requirements with current status."""
+    claim_docs = claim.get("documents", {})
+    checklist = []
+
+    # Base documents
+    for doc in doc_requirements.get("base_documents", []):
+        status_info = claim_docs.get(doc["id"], {"status": "pending"})
+        checklist.append({
+            "id": doc["id"],
+            "name": doc["name"],
+            "description": doc["description"],
+            "required": True,
+            "conditional": False,
+            **status_info,
+        })
+
+    # Conditional documents
+    for doc in doc_requirements.get("conditional_documents", []):
+        condition = doc["condition"]
+        # Determine if this conditional doc applies to this claim
+        applies = False
+        if condition == "fir_required" and claim.get("fir_required"):
+            applies = True
+        elif condition == "status_in_repair" and claim.get("status") in ("In Repair", "Settled"):
+            applies = True
+        elif condition == "injury_involved" and claim.get("injury_involved"):
+            applies = True
+        elif condition == "highway_accident" and "highway" in (claim.get("location", "") + " " + claim.get("incident", "")).lower():
+            applies = True
+
+        if applies:
+            status_info = claim_docs.get(doc["id"], {"status": "pending"})
+            checklist.append({
+                "id": doc["id"],
+                "name": doc["name"],
+                "description": doc["description"],
+                "required": True,
+                "conditional": True,
+                "condition": condition,
+                **status_info,
+            })
+        elif doc["id"] in claim_docs:
+            # Doc explicitly marked in claim data (e.g. not_required)
+            status_info = claim_docs[doc["id"]]
+            checklist.append({
+                "id": doc["id"],
+                "name": doc["name"],
+                "description": doc["description"],
+                "required": False,
+                "conditional": True,
+                "condition": condition,
+                **status_info,
+            })
+
+    return checklist
+
+
+def _document_status_text(claim: dict) -> str:
+    """Build a human-readable document status string for the system prompt."""
+    checklist = _build_document_checklist(claim)
+    if not checklist:
+        return "No document tracking available."
+    lines = []
+    for doc in checklist:
+        st = doc.get("status", "pending")
+        if st == "received":
+            count_note = f" ({doc['count']} photos)" if doc.get("count") else ""
+            lines.append(f"- {doc['name']}: Received{count_note}")
+        elif st == "auto_verified":
+            lines.append(f"- {doc['name']}: Auto-verified from system")
+        elif st == "pending":
+            lines.append(f"- {doc['name']}: PENDING -- ask the claimant for this")
+        elif st == "not_required":
+            lines.append(f"- {doc['name']}: Not required")
+        else:
+            lines.append(f"- {doc['name']}: {st}")
+    received = sum(1 for d in checklist if d.get("status") in ("received", "auto_verified"))
+    total = sum(1 for d in checklist if d.get("status") != "not_required")
+    lines.insert(0, f"Document Checklist ({received}/{total} collected):")
+    return "\n".join(lines)
+
+
+@app.get("/api/claims/{claim_id}/documents")
+def get_claim_documents(claim_id: str):
+    claim = None
+    for c in claims_cache:
+        if c["id"] == claim_id:
+            claim = c
+            break
+    if not claim:
+        raise HTTPException(404, "Claim not found")
+    return _build_document_checklist(claim)
+
+
+class DocumentUpdate(BaseModel):
+    notes: str = ""
+
+
+@app.post("/api/claims/{claim_id}/documents/{doc_id}")
+def update_document_status(claim_id: str, doc_id: str, body: DocumentUpdate = DocumentUpdate()):
+    claim = None
+    for c in claims_cache:
+        if c["id"] == claim_id:
+            claim = c
+            break
+    if not claim:
+        raise HTTPException(404, "Claim not found")
+
+    # Validate doc_id exists in requirements
+    all_doc_ids = [d["id"] for d in doc_requirements.get("base_documents", [])] + \
+                  [d["id"] for d in doc_requirements.get("conditional_documents", [])]
+    if doc_id not in all_doc_ids:
+        raise HTTPException(400, f"Unknown document type: {doc_id}")
+
+    if "documents" not in claim:
+        claim["documents"] = {}
+
+    claim["documents"][doc_id] = {
+        "status": "received",
+        "received_date": datetime.now().strftime("%Y-%m-%d"),
+    }
+    if body.notes:
+        claim["documents"][doc_id]["notes"] = body.notes
+
+    # Add to timeline
+    doc_name = doc_id.replace("_", " ").title()
+    for d in doc_requirements.get("base_documents", []) + doc_requirements.get("conditional_documents", []):
+        if d["id"] == doc_id:
+            doc_name = d["name"]
+            break
+    claim.setdefault("timeline", []).append({
+        "date": datetime.now().isoformat(),
+        "event": f"Document received: {doc_name}",
+        "type": "documentation",
+    })
+
+    return {"status": "ok", "document": claim["documents"][doc_id]}
 
 
 @app.get("/api/conversations/{claim_id}")
@@ -259,7 +402,11 @@ Current claim context:
 
 You know Indian vehicle insurance inside out — IRDAI regulations, depreciation schedules, cashless vs reimbursement, surveyor process, etc.
 Keep responses concise (2-4 short paragraphs max). Use Rs. symbol for amounts. Reference Equifi's systems (CRM, loan tracking) naturally.
-Do NOT use markdown headers. Use plain text with bullet points (•) if needed."""
+Do NOT use markdown headers. Use plain text with bullet points (•) if needed.
+
+{_document_status_text(claim)}
+
+When documents are PENDING, proactively ask the claimant to submit them. Guide them on what format is needed and where to send/upload."""
 
     # Build the conversation text for claude
     conv_text = ""
