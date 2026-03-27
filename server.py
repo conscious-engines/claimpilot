@@ -2,6 +2,7 @@
 
 import json
 import asyncio
+import base64
 import os
 import uuid
 import time
@@ -20,6 +21,14 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).parent / ".env")
 
 FAL_KEY = os.getenv("FAL_KEY", "")
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
+CLAUDE_MODEL = "claude-sonnet-4-20250514"
+
+# Initialise Anthropic client if key is available
+_anthropic_client = None
+if ANTHROPIC_API_KEY:
+    import anthropic
+    _anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
 DATA_DIR = Path(__file__).parent / "data"
 UPLOADS_DIR = Path(__file__).parent / "uploads"
@@ -114,30 +123,52 @@ You know Indian vehicle insurance inside out — IRDAI regulations, depreciation
 Keep responses concise (2-4 short paragraphs max). Use Rs. symbol for amounts. Reference Equifi's systems (CRM, loan tracking) naturally.
 Do NOT use markdown headers. Use plain text with bullet points (•) if needed."""
 
-    # Build the conversation text for claude
-    conv_text = ""
+    # Build messages for Anthropic API
+    api_messages = []
     for m in history:
-        role_label = "Customer" if m["role"] == "user" else "ClaimPilot"
-        conv_text += f"\n{role_label}: {m['content']}\n"
-    conv_text += "\nClaimPilot:"
+        role = "user" if m["role"] == "user" else "assistant"
+        api_messages.append({"role": role, "content": m["content"]})
 
-    full_prompt = f"{system_prompt}\n\nConversation so far:{conv_text}"
-
-    # Call claude CLI
-    try:
-        proc = await asyncio.create_subprocess_exec(
-            "claude", "-p", full_prompt, "--model", "sonnet",
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
-        response_text = stdout.decode().strip()
-        if not response_text:
-            response_text = "Sorry, kuch technical issue aa gaya. Please thodi der baad try karein."
-    except asyncio.TimeoutError:
-        response_text = "Response mein thoda time lag raha hai. Please ek minute wait karein aur phir try karein."
-    except Exception as e:
-        response_text = f"Technical issue: {str(e)[:100]}. Please try again."
+    if _anthropic_client:
+        # ── Anthropic SDK path (preferred) ──
+        try:
+            loop = asyncio.get_event_loop()
+            resp = await loop.run_in_executor(
+                None,
+                lambda: _anthropic_client.messages.create(
+                    model=CLAUDE_MODEL,
+                    max_tokens=1024,
+                    system=system_prompt,
+                    messages=api_messages,
+                ),
+            )
+            response_text = resp.content[0].text.strip()
+            if not response_text:
+                response_text = "Sorry, kuch technical issue aa gaya. Please thodi der baad try karein."
+        except Exception as e:
+            response_text = f"Technical issue: {str(e)[:100]}. Please try again."
+    else:
+        # ── Fallback: claude CLI ──
+        conv_text = ""
+        for m in history:
+            role_label = "Customer" if m["role"] == "user" else "ClaimPilot"
+            conv_text += f"\n{role_label}: {m['content']}\n"
+        conv_text += "\nClaimPilot:"
+        full_prompt = f"{system_prompt}\n\nConversation so far:{conv_text}"
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                "claude", "-p", full_prompt, "--model", "sonnet",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
+            response_text = stdout.decode().strip()
+            if not response_text:
+                response_text = "Sorry, kuch technical issue aa gaya. Please thodi der baad try karein."
+        except asyncio.TimeoutError:
+            response_text = "Response mein thoda time lag raha hai. Please ek minute wait karein aur phir try karein."
+        except Exception as e:
+            response_text = f"Technical issue: {str(e)[:100]}. Please try again."
 
     # Store conversation
     history.append({"role": "assistant", "content": response_text})
@@ -298,19 +329,52 @@ Provide a concise damage assessment in Hinglish (Hindi-English mix):
 
 Keep it to 3-4 short paragraphs. Use Rs. for amounts. Be specific about what you see."""
 
-    try:
-        cmd = ["claude", "-p", analysis_prompt, "--model", "sonnet"] + saved_paths
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
-        analysis = stdout.decode().strip()
-        if not analysis:
+    if _anthropic_client:
+        # ── Anthropic SDK vision path ──
+        try:
+            import mimetypes
+            content_blocks = []
+            for sp in saved_paths:
+                img_bytes = Path(sp).read_bytes()
+                b64 = base64.b64encode(img_bytes).decode("utf-8")
+                mime, _ = mimetypes.guess_type(sp)
+                mime = mime or "image/jpeg"
+                content_blocks.append({
+                    "type": "image",
+                    "source": {"type": "base64", "media_type": mime, "data": b64},
+                })
+            content_blocks.append({"type": "text", "text": "Analyze these images."})
+
+            loop = asyncio.get_event_loop()
+            resp = await loop.run_in_executor(
+                None,
+                lambda: _anthropic_client.messages.create(
+                    model=CLAUDE_MODEL,
+                    max_tokens=1024,
+                    system=analysis_prompt,
+                    messages=[{"role": "user", "content": content_blocks}],
+                ),
+            )
+            analysis = resp.content[0].text.strip()
+            if not analysis:
+                analysis = f"[{len(urls)} photo(s) received — analysis unavailable]"
+        except Exception:
             analysis = f"[{len(urls)} photo(s) received — analysis unavailable]"
-    except Exception:
-        analysis = f"[{len(urls)} photo(s) received — analysis unavailable]"
+    else:
+        # ── Fallback: claude CLI ──
+        try:
+            cmd = ["claude", "-p", analysis_prompt, "--model", "sonnet"] + saved_paths
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
+            analysis = stdout.decode().strip()
+            if not analysis:
+                analysis = f"[{len(urls)} photo(s) received — analysis unavailable]"
+        except Exception:
+            analysis = f"[{len(urls)} photo(s) received — analysis unavailable]"
 
     # Add photo + analysis to conversation
     history = conversations.get(claim_id, [])
