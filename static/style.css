@@ -23,11 +23,17 @@
   --purple: #7c3aed;
   --purple-bg: #ede9fe;
   --header-bg: #1e293b;
-  --radius: 10px;
-  --radius-lg: 14px;
-  --shadow-sm: 0 1px 2px rgba(15,23,42,0.04);
-  --shadow: 0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04);
-  --shadow-md: 0 4px 12px rgba(15,23,42,0.08);
+  --accent-container: #f0fdfa;
+  --surface-tint: rgba(13,148,136,0.05);
+  --surface-variant: #f1f5f9;
+  --outline: #c8d2dc;
+  --outline-variant: #e2e8f0;
+  --radius: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --shadow-sm: 0 1px 2px rgba(15,23,42,0.03);
+  --shadow: 0 1px 3px rgba(15,23,42,0.04), 0 1px 2px rgba(15,23,42,0.03);
+  --shadow-md: 0 2px 8px rgba(15,23,42,0.06), 0 4px 16px rgba(15,23,42,0.04);
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
@@ -64,10 +70,10 @@ body {
 }
 
 .brand-icon {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   background: var(--accent);
-  border-radius: 8px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -109,10 +115,10 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 16px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 8px;
+  padding: 8px 18px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 20px;
   color: #fff;
   font-family: var(--font);
   font-size: 14px;
@@ -122,8 +128,7 @@ body {
 }
 
 .role-selector-btn:hover {
-  background: rgba(255,255,255,0.14);
-  border-color: rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.16);
 }
 
 .role-selector-btn svg {
@@ -141,11 +146,11 @@ body {
   left: 50%;
   transform: translateX(-50%);
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md), 0 8px 24px rgba(15,23,42,0.12);
+  box-shadow: 0 2px 6px rgba(15,23,42,0.06), 0 8px 24px rgba(15,23,42,0.1);
   min-width: 300px;
-  padding: 6px;
+  padding: 8px;
   z-index: 200;
 }
 
@@ -192,13 +197,13 @@ body {
 
 .role-option-icon {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-secondary);
-  border-radius: 8px;
+  background: var(--surface-variant);
+  border-radius: 12px;
   color: var(--text-secondary);
 }
 
@@ -249,8 +254,6 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--surface);
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
 }
 
 .chat-header {
@@ -445,23 +448,24 @@ body {
 
 .claim-card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: none;
+  border-radius: var(--radius-xl);
   padding: 24px;
-  box-shadow: var(--shadow-sm);
-  border-top: 3px solid var(--blue);
-  transition: box-shadow 0.2s ease;
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--blue);
+  transition: all 0.2s ease;
 }
 
 .claim-card:hover {
   box-shadow: var(--shadow-md);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--accent-container) 100%);
 }
 
 /* Color top border based on status */
-.claim-card:has(.status-settled) { border-top-color: var(--green); }
-.claim-card:has(.status-in-progress) { border-top-color: var(--amber); }
-.claim-card:has(.status-in-repair) { border-top-color: var(--purple); }
-.claim-card:has(.status-new) { border-top-color: var(--blue); }
+.claim-card:has(.status-settled) { border-left-color: var(--green); }
+.claim-card:has(.status-in-progress) { border-left-color: var(--amber); }
+.claim-card:has(.status-in-repair) { border-left-color: var(--purple); }
+.claim-card:has(.status-new) { border-left-color: var(--blue); }
 
 .claim-card-header {
   display: flex;
@@ -492,11 +496,12 @@ body {
 
 .status-badge {
   display: inline-block;
-  padding: 4px 10px;
+  padding: 6px 14px;
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
   white-space: nowrap;
+  letter-spacing: 0.2px;
 }
 
 .status-new { background: var(--blue-bg); color: var(--blue); }
@@ -589,9 +594,10 @@ body {
 
 .timeline-list {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: none;
+  border-radius: var(--radius-xl);
   overflow: hidden;
+  box-shadow: var(--shadow);
 }
 
 .timeline-item {
@@ -679,22 +685,33 @@ body {
 
 .metric-card {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 22px;
-  box-shadow: var(--shadow-sm);
-  border-left: 3px solid var(--accent);
-  transition: box-shadow 0.2s ease;
+  border: none;
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: var(--accent);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
 
 .metric-card:hover {
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
-.metric-card:nth-child(1) { border-left-color: var(--blue); }
-.metric-card:nth-child(2) { border-left-color: var(--accent); }
-.metric-card:nth-child(3) { border-left-color: var(--green); }
-.metric-card:nth-child(4) { border-left-color: var(--purple); }
+.metric-card:nth-child(1)::before { background: var(--blue); }
+.metric-card:nth-child(2)::before { background: var(--accent); }
+.metric-card:nth-child(3)::before { background: var(--green); }
+.metric-card:nth-child(4)::before { background: var(--purple); }
 
 .metric-label {
   font-size: 12px;
@@ -723,10 +740,11 @@ body {
 /* Status breakdown */
 .status-breakdown {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 22px;
+  border: none;
+  border-radius: var(--radius-xl);
+  padding: 24px;
   margin-bottom: 36px;
+  box-shadow: var(--shadow);
 }
 
 .status-breakdown h3 {
@@ -780,9 +798,10 @@ body {
 
 .decisions-list {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: none;
+  border-radius: var(--radius-xl);
   overflow: hidden;
+  box-shadow: var(--shadow);
 }
 
 .decision-item {
