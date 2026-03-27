@@ -38,8 +38,8 @@ archive/data/*.db*
 archive/data/*.db-shm
 archive/data/*.db-wal
 
-# local data
-data/
+# local data (root-level sqlite only)
+/data/
 
 # legacy root-level python files (pre-migration)
 server.py
