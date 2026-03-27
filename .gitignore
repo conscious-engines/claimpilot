@@ -1,5 +1,56 @@
-tests/__pycache__/
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# testing
+coverage/
+
+# next.js
+.next/
+out/
+
+# production
+build/
+
+# misc
+.DS_Store
+*.pem
+.env
+.env*.local
+
+# debug
+npm-debug.log*
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# vercel
+.vercel
+
+# archive python stuff
+archive/__pycache__/
+archive/*.pyc
+archive/.venv/
+archive/uploads/
+archive/data/*.db*
+archive/data/*.db-shm
+archive/data/*.db-wal
+
+# local data
+data/
+
+# legacy root-level python files (pre-migration)
+server.py
+main.py
+database.py
+insurer_agent.py
+llm.py
+pyproject.toml
+uv.lock
+.python-version
+demo/
 __pycache__/
 *.pyc
-.env
-uploads/
+.venv/
