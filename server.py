@@ -2,7 +2,6 @@
 
 import json
 import asyncio
-import base64
 import os
 import uuid
 import time
@@ -21,14 +20,6 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).parent / ".env")
 
 FAL_KEY = os.getenv("FAL_KEY", "")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-CLAUDE_MODEL = "claude-sonnet-4-20250514"
-
-# Initialise Anthropic client if key is available
-_anthropic_client = None
-if ANTHROPIC_API_KEY:
-    import anthropic
-    _anthropic_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 
 DATA_DIR = Path(__file__).parent / "data"
 UPLOADS_DIR = Path(__file__).parent / "uploads"
@@ -37,14 +28,19 @@ UPLOADS_DIR.mkdir(exist_ok=True)
 # In-memory stores (seeded at startup)
 claims_cache: list[dict] = []
 conversations: dict[str, list[dict]] = {}
+emails: dict[str, list[dict]] = {}
 
 @asynccontextmanager
 async def lifespan(app):
-    global claims_cache, conversations
+    global claims_cache, conversations, emails
     with open(DATA_DIR / "claims.json") as f:
         claims_cache = json.load(f)["claims"]
     with open(DATA_DIR / "conversations.json") as f:
         conversations = json.load(f)
+    emails_file = DATA_DIR / "emails.json"
+    if emails_file.exists():
+        with open(emails_file) as f:
+            emails = json.load(f)
     yield
 
 app = FastAPI(title="ClaimPilot POC", lifespan=lifespan)
@@ -63,6 +59,13 @@ app.add_middleware(
 class ChatMessage(BaseModel):
     claim_id: str
     message: str
+
+class EmailSend(BaseModel):
+    claim_id: str
+    to: str
+    subject: str
+    body: str
+    type: str = "follow_up"  # intimation, follow_up, document_request, surveyor_assignment, settlement_notice
 
 
 # ── API Routes ─────────────────────────────────────────────
@@ -83,6 +86,141 @@ def get_claim(claim_id: str):
 @app.get("/api/conversations/{claim_id}")
 def get_conversation(claim_id: str):
     return conversations.get(claim_id, [])
+
+
+# ── Email Endpoints ───────────────────────────────────────
+
+@app.get("/api/emails/{claim_id}")
+def get_emails(claim_id: str):
+    return emails.get(claim_id, [])
+
+
+@app.post("/api/emails/send")
+def send_email(email: EmailSend):
+    claim = None
+    for c in claims_cache:
+        if c["id"] == email.claim_id:
+            claim = c
+            break
+    if not claim:
+        raise HTTPException(404, "Claim not found")
+
+    email_record = {
+        "id": f"EML-{uuid.uuid4().hex[:6].upper()}",
+        "timestamp": datetime.now().isoformat(),
+        "from": "claims@claimpilot.equifi.in",
+        "to": email.to,
+        "cc": "",
+        "subject": email.subject,
+        "body": email.body,
+        "type": email.type,
+        "status": "sent",
+        "direction": "outgoing",
+    }
+
+    if email.claim_id not in emails:
+        emails[email.claim_id] = []
+    emails[email.claim_id].append(email_record)
+
+    # Add to claim timeline
+    claim.setdefault("timeline", []).append({
+        "date": email_record["timestamp"],
+        "event": f"Email sent: {email.subject[:60]}",
+        "type": "email",
+    })
+
+    return email_record
+
+
+@app.post("/api/claims/{claim_id}/intimate")
+def intimate_claim(claim_id: str):
+    claim = None
+    for c in claims_cache:
+        if c["id"] == claim_id:
+            claim = c
+            break
+    if not claim:
+        raise HTTPException(404, "Claim not found")
+
+    # Build formal intimation email
+    insurer_email_map = {
+        "ICICI Lombard": "claims.intimation@icicilombard.com",
+        "Bajaj Allianz": "claims.motor@bajajallianz.co.in",
+        "HDFC ERGO": "claims.motor@hdfcergo.com",
+    }
+    to_addr = insurer_email_map.get(claim["insurer"], f"claims@{claim['insurer'].lower().replace(' ', '')}.com")
+
+    subject = f"Claim Intimation — {claim['vehicle']} ({claim['registration']}) — Policy {claim['policy_number']}"
+
+    body = f"""Dear Sir/Madam,
+
+We are writing to intimate a claim under the above-referenced policy.
+
+Policy No: {claim['policy_number']}
+Insured Vehicle: {claim['vehicle']}
+Registration: {claim['registration']}
+Claimant: {claim['claimant_name']}
+Date of Incident: {claim['incident_date']}
+Location: {claim['location']}
+
+Nature of Incident:
+{claim['incident']}
+
+Estimated Loss: Rs. {claim['estimated_amount']:,}/-
+{f"FIR No: {claim['fir_number']}" if claim.get('fir_number') else "FIR: Not required"}
+
+We request you to kindly register this claim and assign a surveyor at the earliest.
+
+This intimation is being made as per IRDAI guidelines.
+
+Regards,
+ClaimPilot AI Claims System
+Equifi Financial Services
+Bhubaneswar, Odisha
+Ref: {claim['id']} | Loan A/c: {claim['loan_account']}"""
+
+    email_record = {
+        "id": f"EML-{uuid.uuid4().hex[:6].upper()}",
+        "timestamp": datetime.now().isoformat(),
+        "from": "claims@claimpilot.equifi.in",
+        "to": to_addr,
+        "cc": "",
+        "subject": subject,
+        "body": body,
+        "type": "intimation",
+        "status": "sent",
+        "direction": "outgoing",
+    }
+
+    if claim_id not in emails:
+        emails[claim_id] = []
+    emails[claim_id].append(email_record)
+
+    # Update timeline
+    claim.setdefault("timeline", []).append({
+        "date": email_record["timestamp"],
+        "event": f"Intimation email sent to {claim['insurer']}",
+        "type": "email",
+    })
+
+    return email_record
+
+
+def _check_auto_email(claim_id: str, response_text: str) -> bool:
+    """Check if the AI response mentions filing/intimation and auto-send email."""
+    keywords = ["intimation", "intimate", "filed", "filing", "submitted", "submit claim", "claim file"]
+    response_lower = response_text.lower()
+    if any(kw in response_lower for kw in keywords):
+        # Only auto-send if no intimation email exists yet for this claim
+        existing = emails.get(claim_id, [])
+        has_intimation = any(e.get("type") == "intimation" for e in existing)
+        if not has_intimation:
+            try:
+                intimate_claim(claim_id)
+                return True
+            except Exception:
+                pass
+    return False
 
 
 @app.post("/api/chat")
@@ -123,58 +261,39 @@ You know Indian vehicle insurance inside out — IRDAI regulations, depreciation
 Keep responses concise (2-4 short paragraphs max). Use Rs. symbol for amounts. Reference Equifi's systems (CRM, loan tracking) naturally.
 Do NOT use markdown headers. Use plain text with bullet points (•) if needed."""
 
-    # Build messages for Anthropic API
-    api_messages = []
+    # Build the conversation text for claude
+    conv_text = ""
     for m in history:
-        role = "user" if m["role"] == "user" else "assistant"
-        api_messages.append({"role": role, "content": m["content"]})
+        role_label = "Customer" if m["role"] == "user" else "ClaimPilot"
+        conv_text += f"\n{role_label}: {m['content']}\n"
+    conv_text += "\nClaimPilot:"
 
-    if _anthropic_client:
-        # ── Anthropic SDK path (preferred) ──
-        try:
-            loop = asyncio.get_event_loop()
-            resp = await loop.run_in_executor(
-                None,
-                lambda: _anthropic_client.messages.create(
-                    model=CLAUDE_MODEL,
-                    max_tokens=1024,
-                    system=system_prompt,
-                    messages=api_messages,
-                ),
-            )
-            response_text = resp.content[0].text.strip()
-            if not response_text:
-                response_text = "Sorry, kuch technical issue aa gaya. Please thodi der baad try karein."
-        except Exception as e:
-            response_text = f"Technical issue: {str(e)[:100]}. Please try again."
-    else:
-        # ── Fallback: claude CLI ──
-        conv_text = ""
-        for m in history:
-            role_label = "Customer" if m["role"] == "user" else "ClaimPilot"
-            conv_text += f"\n{role_label}: {m['content']}\n"
-        conv_text += "\nClaimPilot:"
-        full_prompt = f"{system_prompt}\n\nConversation so far:{conv_text}"
-        try:
-            proc = await asyncio.create_subprocess_exec(
-                "claude", "-p", full_prompt, "--model", "sonnet",
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
-            response_text = stdout.decode().strip()
-            if not response_text:
-                response_text = "Sorry, kuch technical issue aa gaya. Please thodi der baad try karein."
-        except asyncio.TimeoutError:
-            response_text = "Response mein thoda time lag raha hai. Please ek minute wait karein aur phir try karein."
-        except Exception as e:
-            response_text = f"Technical issue: {str(e)[:100]}. Please try again."
+    full_prompt = f"{system_prompt}\n\nConversation so far:{conv_text}"
+
+    # Call claude CLI
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "claude", "-p", full_prompt, "--model", "sonnet",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
+        response_text = stdout.decode().strip()
+        if not response_text:
+            response_text = "Sorry, kuch technical issue aa gaya. Please thodi der baad try karein."
+    except asyncio.TimeoutError:
+        response_text = "Response mein thoda time lag raha hai. Please ek minute wait karein aur phir try karein."
+    except Exception as e:
+        response_text = f"Technical issue: {str(e)[:100]}. Please try again."
 
     # Store conversation
     history.append({"role": "assistant", "content": response_text})
     conversations[msg.claim_id] = history
 
-    return {"response": response_text}
+    # Check if we should auto-send an intimation email
+    email_sent = _check_auto_email(msg.claim_id, response_text)
+
+    return {"response": response_text, "email_sent": email_sent}
 
 
 @app.get("/api/metrics")
@@ -329,52 +448,19 @@ Provide a concise damage assessment in Hinglish (Hindi-English mix):
 
 Keep it to 3-4 short paragraphs. Use Rs. for amounts. Be specific about what you see."""
 
-    if _anthropic_client:
-        # ── Anthropic SDK vision path ──
-        try:
-            import mimetypes
-            content_blocks = []
-            for sp in saved_paths:
-                img_bytes = Path(sp).read_bytes()
-                b64 = base64.b64encode(img_bytes).decode("utf-8")
-                mime, _ = mimetypes.guess_type(sp)
-                mime = mime or "image/jpeg"
-                content_blocks.append({
-                    "type": "image",
-                    "source": {"type": "base64", "media_type": mime, "data": b64},
-                })
-            content_blocks.append({"type": "text", "text": "Analyze these images."})
-
-            loop = asyncio.get_event_loop()
-            resp = await loop.run_in_executor(
-                None,
-                lambda: _anthropic_client.messages.create(
-                    model=CLAUDE_MODEL,
-                    max_tokens=1024,
-                    system=analysis_prompt,
-                    messages=[{"role": "user", "content": content_blocks}],
-                ),
-            )
-            analysis = resp.content[0].text.strip()
-            if not analysis:
-                analysis = f"[{len(urls)} photo(s) received — analysis unavailable]"
-        except Exception:
+    try:
+        cmd = ["claude", "-p", analysis_prompt, "--model", "sonnet"] + saved_paths
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
+        analysis = stdout.decode().strip()
+        if not analysis:
             analysis = f"[{len(urls)} photo(s) received — analysis unavailable]"
-    else:
-        # ── Fallback: claude CLI ──
-        try:
-            cmd = ["claude", "-p", analysis_prompt, "--model", "sonnet"] + saved_paths
-            proc = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=60)
-            analysis = stdout.decode().strip()
-            if not analysis:
-                analysis = f"[{len(urls)} photo(s) received — analysis unavailable]"
-        except Exception:
-            analysis = f"[{len(urls)} photo(s) received — analysis unavailable]"
+    except Exception:
+        analysis = f"[{len(urls)} photo(s) received — analysis unavailable]"
 
     # Add photo + analysis to conversation
     history = conversations.get(claim_id, [])

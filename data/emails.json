@@ -1,0 +1,259 @@
+{
+  "CLM-2026-0041": [
+    {
+      "id": "EML-041-001",
+      "timestamp": "2026-03-18T09:20:00",
+      "from": "claims@claimpilot.equifi.in",
+      "to": "claims.intimation@icicilombard.com",
+      "cc": "rajesh.patel@gmail.com",
+      "subject": "Claim Intimation \u2014 JCB 3DX Backhoe Loader (OD-02-BQ-7734) \u2014 Policy POL-IL-20260041",
+      "body": "Dear Sir/Madam,\n\nWe are writing to intimate a claim under the above-referenced policy. Details as follows:\n\nPolicy No: POL-IL-20260041\nInsured Vehicle: JCB 3DX Backhoe Loader\nRegistration: OD-02-BQ-7734\nClaimant: Rajesh Kumar Patel\nDate of Incident: 17 March 2026\nLocation: Chandaka Industrial Area, Bhubaneswar, Odisha\n\nNature of Incident:\nThe vehicle tipped over at a construction site during excavation work, resulting in damage to the hydraulic arm and cabin structure.\n\nEstimated Loss: Rs. 2,40,000/-\n\nWe request you to kindly register this claim and assign a surveyor at the earliest. All supporting documents including site photographs (8 nos.) and operator statement have been uploaded to our portal.\n\nThis intimation is being made within 24 hours of the incident as per IRDAI guidelines.\n\nRegards,\nClaimPilot AI Claims System\nEquifi Financial Services\nBhubaneswar, Odisha\nRef: CLM-2026-0041 | Loan A/c: EQF-LN-2024-1187",
+      "type": "intimation",
+      "status": "sent",
+      "direction": "outgoing"
+    },
+    {
+      "id": "EML-041-002",
+      "timestamp": "2026-03-19T11:30:00",
+      "from": "surveyor.desk@icicilombard.com",
+      "to": "claims@claimpilot.equifi.in",
+      "cc": "mkrao.associates@gmail.com",
+      "subject": "RE: Claim Intimation \u2014 JCB 3DX (OD-02-BQ-7734) \u2014 Surveyor Assignment",
+      "body": "Dear Team,\n\nWith reference to your claim intimation dated 18-03-2026, we have registered your claim under reference ICL/CLM/2026/03/04821.\n\nWe have assigned M/s M.K. Rao & Associates as the surveyor for this claim. The surveyor will contact the claimant within 48 hours to schedule an inspection.\n\nSurveyor Details:\nFirm: M.K. Rao & Associates\nContact: Mr. M.K. Rao\nPhone: +91-674-XXXX567\nIRDAI License: SUR/OD/2019/0234\n\nPlease ensure the vehicle is available for inspection and all relevant documents are kept ready.\n\nRegards,\nClaims Processing Desk\nICICI Lombard General Insurance Co. Ltd.",
+      "type": "surveyor_assignment",
+      "status": "received",
+      "direction": "incoming"
+    },
+    {
+      "id": "EML-041-003",
+      "timestamp": "2026-03-20T10:15:00",
+      "from": "mkrao.associates@gmail.com",
+      "to": "claims@claimpilot.equifi.in",
+      "cc": "surveyor.desk@icicilombard.com",
+      "subject": "Document Request \u2014 CLM-2026-0041 \u2014 JCB 3DX (OD-02-BQ-7734)",
+      "body": "Dear Sir/Madam,\n\nWith reference to the above claim, I am the appointed surveyor for inspection of the JCB 3DX Backhoe Loader (OD-02-BQ-7734).\n\nKindly arrange the following documents before the inspection date:\n\n1. Original RC Book (Registration Certificate)\n2. Valid Driving License of the operator at time of incident\n3. Insurance Policy copy\n4. Fitness Certificate of the vehicle\n5. Permit/Registration for commercial use\n6. Operator's written statement about the incident\n7. Site supervisor's statement\n8. Any CCTV footage if available\n\nI propose to inspect the vehicle on 27 March 2026 at the site location. Please confirm availability.\n\nRegards,\nM.K. Rao\nM.K. Rao & Associates\nIRDAI Licensed Surveyor",
+      "type": "document_request",
+      "status": "received",
+      "direction": "incoming"
+    },
+    {
+      "id": "EML-041-004",
+      "timestamp": "2026-03-20T14:30:00",
+      "from": "claims@claimpilot.equifi.in",
+      "to": "mkrao.associates@gmail.com",
+      "cc": "surveyor.desk@icicilombard.com, rajesh.patel@gmail.com",
+      "subject": "RE: Document Request \u2014 CLM-2026-0041 \u2014 Documents Attached",
+      "body": "Dear Mr. Rao,\n\nThank you for your communication. We confirm the inspection date of 27 March 2026.\n\nPlease find attached the following documents as requested:\n\n1. RC Book copy \u2014 Attached\n2. Operator DL copy \u2014 Attached\n3. Insurance Policy copy \u2014 Attached\n4. Fitness Certificate \u2014 Attached\n5. Commercial permit \u2014 Attached\n6. Operator statement \u2014 Attached\n7. Site supervisor statement \u2014 Will be provided on-site\n8. CCTV footage \u2014 Not available at site\n\nThe vehicle is currently at the incident location (Chandaka Industrial Area) and will be available for inspection.\n\nMr. Rajesh Kumar Patel (claimant) has been informed and will be present during the inspection.\n\nRegards,\nClaimPilot AI Claims System\nEquifi Financial Services",
+      "type": "follow_up",
+      "status": "sent",
+      "direction": "outgoing"
+    }
+  ],
+  "CLM-2026-0042": [
+    {
+      "id": "EML-042-001",
+      "timestamp": "2026-03-25T10:05:00",
+      "from": "claims@claimpilot.equifi.in",
+      "to": "claims.motor@bajajallianz.co.in",
+      "cc": "suresh.mohanty@gmail.com",
+      "subject": "Claim Intimation \u2014 Tata Signa 4825.TK Tipper (OD-14-AB-3391) \u2014 Policy POL-BA-20260042",
+      "body": "Dear Sir/Madam,\n\nWe are writing to intimate a motor insurance claim under the above-referenced policy. This is a PRIORITY claim involving a highway accident.\n\nPolicy No: POL-BA-20260042\nInsured Vehicle: Tata Signa 4825.TK Tipper\nRegistration: OD-14-AB-3391\nClaimant: Suresh Mohanty\nDate of Incident: 25 March 2026\nTime: Approx. 06:45 AM\nLocation: NH-16, near Balasore, Odisha\n\nNature of Incident:\nFront collision with road divider on National Highway 16. Significant damage to cabin and chassis structure. The driver sustained minor injuries and has been treated at a local hospital.\n\nEstimated Loss: Rs. 3,85,000/-\n\nFIR Details:\nFIR No: FIR-BLS-2026-0312\nPolice Station: Balasore PS\n\nNote: As this involves a highway accident with FIR, we request expedited processing as per IRDAI Motor Claims guidelines. The vehicle is currently at the accident site and needs to be towed.\n\nAll available documents including FIR copy and initial photographs have been uploaded to our claims portal.\n\nRegards,\nClaimPilot AI Claims System\nEquifi Financial Services\nBhubaneswar, Odisha\nRef: CLM-2026-0042 | Loan A/c: EQF-LN-2025-0234",
+      "type": "intimation",
+      "status": "sent",
+      "direction": "outgoing"
+    },
+    {
+      "id": "EML-042-002",
+      "timestamp": "2026-03-25T14:20:00",
+      "from": "motor.claims@bajajallianz.co.in",
+      "to": "claims@claimpilot.equifi.in",
+      "subject": "RE: Claim Intimation \u2014 Tata Signa (OD-14-AB-3391) \u2014 Acknowledgment",
+      "body": "Dear Team,\n\nWe acknowledge receipt of your claim intimation dated 25-03-2026.\n\nYour claim has been registered under reference: BA/MTR/CLM/2026/11923\n\nAs this is a highway accident case with FIR involvement, we are processing this on priority. However, we require the following before surveyor assignment:\n\n1. Certified copy of FIR (FIR-BLS-2026-0312)\n2. Driver's medical report\n3. Vehicle towing receipt\n4. Photographs of accident scene and vehicle damage\n\nPlease submit these documents within 7 days to avoid any delay in processing.\n\nSurveyor assignment will be communicated once the above documents are received.\n\nRegards,\nMotor Claims Department\nBajaj Allianz General Insurance Co. Ltd.",
+      "type": "follow_up",
+      "status": "received",
+      "direction": "incoming"
+    },
+    {
+      "id": "EML-042-003",
+      "timestamp": "2026-03-26T09:00:00",
+      "from": "claims@claimpilot.equifi.in",
+      "to": "motor.claims@bajajallianz.co.in",
+      "cc": "suresh.mohanty@gmail.com",
+      "subject": "RE: Claim \u2014 Tata Signa (OD-14-AB-3391) \u2014 FIR & Documents Submitted",
+      "body": "Dear Sir/Madam,\n\nWith reference to claim BA/MTR/CLM/2026/11923, please find attached:\n\n1. Certified FIR copy (FIR-BLS-2026-0312) \u2014 Attached\n2. Driver medical report from Balasore District Hospital \u2014 Attached\n3. Towing receipt (Sri Balaji Towing, Balasore) \u2014 Attached\n4. Accident scene photographs (12 nos.) \u2014 Attached\n5. Vehicle damage photographs (8 nos.) \u2014 Attached\n\nThe vehicle has been towed to a secure yard in Balasore. We request early surveyor assignment given the extent of damage and outstanding loan on this vehicle.\n\nRegards,\nClaimPilot AI Claims System\nEquifi Financial Services",
+      "type": "follow_up",
+      "status": "sent",
+      "direction": "outgoing"
+    }
+  ],
+  "CLM-2026-0038": [
+    {
+      "id": "EML-038-001",
+      "timestamp": "2026-03-10T09:10:00",
+      "from": "claims@claimpilot.equifi.in",
+      "to": "claims.motor@hdfcergo.com",
+      "cc": "bikash.sahoo@gmail.com",
+      "subject": "Claim Intimation \u2014 Ashok Leyland Dost+ LCV (OD-05-CD-9987) \u2014 Policy POL-HE-20260038",
+      "body": "Dear Sir/Madam,\n\nWe are writing to intimate a motor insurance claim under the above-referenced policy.\n\nPolicy No: POL-HE-20260038\nInsured Vehicle: Ashok Leyland Dost+ LCV\nRegistration: OD-05-CD-9987\nClaimant: Bikash Sahoo\nDate of Incident: 9 March 2026\nLocation: Chandikhole Toll Plaza, Jajpur, Odisha\n\nNature of Incident:\nThe vehicle was rear-ended by a truck at the Chandikhole toll plaza. Damage sustained to tailgate, rear bumper, and cargo bed.\n\nEstimated Loss: Rs. 78,000/-\n\nFIR Details:\nFIR No: FIR-CKH-2026-0198\nPolice Station: Chandikhole PS\n\nWe request cashless repair facility under this policy. FIR copy and initial damage photographs are attached.\n\nRegards,\nClaimPilot AI Claims System\nEquifi Financial Services\nBhubaneswar, Odisha\nRef: CLM-2026-0038 | Loan A/c: EQF-LN-2024-0892",
+      "type": "intimation",
+      "status": "sent",
+      "direction": "outgoing"
+    },
+    {
+      "id": "EML-038-002",
+      "timestamp": "2026-03-11T10:30:00",
+      "from": "motor.claims@hdfcergo.com",
+      "to": "claims@claimpilot.equifi.in",
+      "cc": "spdash.surveyors@gmail.com",
+      "subject": "RE: Claim Intimation \u2014 Ashok Leyland Dost+ (OD-05-CD-9987) \u2014 Surveyor Assigned",
+      "body": "Dear Team,\n\nWe acknowledge your claim intimation and have registered it under reference: HE/MTR/2026/07834.\n\nSurveyor has been assigned:\nFirm: S.P. Dash Surveyors\nContact: Mr. S.P. Dash\nPhone: +91-671-XXXX890\nIRDAI License: SUR/OD/2020/0189\n\nThe surveyor will contact you within 24 hours. Please keep the vehicle available for inspection.\n\nNote: Your request for cashless repair has been noted. Cashless facility decision will be communicated post survey report.\n\nRegards,\nMotor Claims Department\nHDFC ERGO General Insurance Co. Ltd.",
+      "type": "surveyor_assignment",
+      "status": "received",
+      "direction": "incoming"
+    },
+    {
+      "id": "EML-038-003",
+      "timestamp": "2026-03-15T09:30:00",
+      "from": "spdash.surveyors@gmail.com",
+      "to": "motor.claims@hdfcergo.com",
+      "cc": "claims@claimpilot.equifi.in",
+      "subject": "Survey Report \u2014 Ashok Leyland Dost+ (OD-05-CD-9987) \u2014 HE/MTR/2026/07834",
+      "body": "Dear Sir/Madam,\n\nPlease find attached the survey report for the above-referenced claim.\n\nSurvey Summary:\n- Date of Inspection: 14 March 2026\n- Location: Chandikhole, Jajpur\n- Vehicle Condition: Damage consistent with rear-end collision\n\nDamage Assessment:\n1. Rear bumper \u2014 Complete replacement required: Rs. 12,500\n2. Tailgate assembly \u2014 Replacement required: Rs. 28,000\n3. Cargo bed repair \u2014 Denting & painting: Rs. 18,000\n4. Rear light cluster \u2014 Replacement: Rs. 6,400\n5. Labour charges: Rs. 7,500\n\nTotal Assessed: Rs. 72,400/-\n\nNote: Minor pre-existing damage observed on left body panel (unrelated to this incident). This has been excluded from the assessment.\n\nRecommendation: Claim is genuine. Cashless repair recommended at authorized/network garage.\n\nDetailed report with photographs attached.\n\nRegards,\nS.P. Dash\nS.P. Dash Surveyors\nIRDAI Licensed Surveyor",
+      "type": "follow_up",
+      "status": "received",
+      "direction": "incoming"
+    },
+    {
+      "id": "EML-038-004",
+      "timestamp": "2026-03-16T10:15:00",
+      "from": "motor.claims@hdfcergo.com",
+      "to": "claims@claimpilot.equifi.in",
+      "cc": "bikash.sahoo@gmail.com",
+      "subject": "Cashless Repair Approved \u2014 Ashok Leyland Dost+ (OD-05-CD-9987) \u2014 HE/MTR/2026/07834",
+      "body": "Dear Team,\n\nWith reference to the above claim, we are pleased to inform you that cashless repair has been approved based on the surveyor's report.\n\nApproval Details:\nApproved Amount: Rs. 72,400/-\nRepair Type: Cashless\nApproved Workshop: Any HDFC ERGO network garage in Odisha\n\nConditions:\n1. Repairs must commence within 15 days of this approval\n2. Workshop must submit pre-repair and post-repair photographs\n3. Original replaced parts must be preserved for 30 days\n4. Any additional damage found during repair must be reported before proceeding\n\nPlease share this approval letter with the workshop. The workshop can raise the bill directly with us.\n\nRegards,\nMotor Claims Department\nHDFC ERGO General Insurance Co. Ltd.",
+      "type": "follow_up",
+      "status": "received",
+      "direction": "incoming"
+    },
+    {
+      "id": "EML-038-005",
+      "timestamp": "2026-03-17T11:30:00",
+      "from": "claims@claimpilot.equifi.in",
+      "to": "motor.claims@hdfcergo.com",
+      "cc": "sahooautoworks@gmail.com, bikash.sahoo@gmail.com",
+      "subject": "RE: Cashless Repair \u2014 Vehicle Sent to Workshop \u2014 Ashok Leyland Dost+ (OD-05-CD-9987)",
+      "body": "Dear Sir/Madam,\n\nThank you for the cashless approval. We confirm that the vehicle has been sent to the following workshop:\n\nWorkshop: Sahoo Auto Works\nAddress: Industrial Estate, Cuttack, Odisha\nContact: Mr. P.K. Sahoo, +91-671-XXXX234\nHDFC ERGO Network ID: NW/OD/CTC/0089\n\nGate Pass No: GP-2026-0187 has been issued from our end.\n\nThe workshop has been informed about the conditions mentioned in your approval. Pre-repair photographs will be shared within 24 hours.\n\nEstimated repair duration: 10-12 working days (subject to parts availability).\n\nRegards,\nClaimPilot AI Claims System\nEquifi Financial Services",
+      "type": "follow_up",
+      "status": "sent",
+      "direction": "outgoing"
+    },
+    {
+      "id": "EML-038-006",
+      "timestamp": "2026-03-22T14:15:00",
+      "from": "claims@claimpilot.equifi.in",
+      "to": "motor.claims@hdfcergo.com",
+      "cc": "bikash.sahoo@gmail.com",
+      "subject": "Repair Status Update \u2014 Ashok Leyland Dost+ (OD-05-CD-9987) \u2014 Parts Ordered",
+      "body": "Dear Sir/Madam,\n\nRepair status update for claim HE/MTR/2026/07834:\n\nWorkshop: Sahoo Auto Works, Cuttack\nCurrent Status: Repair in progress\n\nUpdate:\n- Denting and painting work on cargo bed: Completed\n- Rear bumper: Ordered from Ashok Leyland dealer (expected by 28 Mar)\n- Tailgate assembly: Ordered from Ashok Leyland dealer (expected by 28 Mar)\n- Rear light cluster: In stock, replacement pending\n\nEstimated completion: 30-31 March 2026 (subject to parts delivery).\n\nWe will keep you updated on progress.\n\nRegards,\nClaimPilot AI Claims System\nEquifi Financial Services",
+      "type": "follow_up",
+      "status": "sent",
+      "direction": "outgoing"
+    }
+  ],
+  "CLM-2026-0035": [
+    {
+      "id": "EML-035-001",
+      "timestamp": "2026-02-28T09:10:00",
+      "from": "claims@claimpilot.equifi.in",
+      "to": "claims.intimation@icicilombard.com",
+      "cc": "manish.agarwal@gmail.com",
+      "subject": "Claim Intimation \u2014 Komatsu PC210 Excavator (OD-02-BQ-5521) \u2014 Policy POL-IL-20260035",
+      "body": "Dear Sir/Madam,\n\nWe are writing to intimate a claim under the above-referenced policy.\n\nPolicy No: POL-IL-20260035\nInsured Vehicle: Komatsu PC210 Excavator\nRegistration: OD-02-BQ-5521\nClaimant: Manish Agarwal\nDate of Incident: 27 February 2026\nLocation: Khurda Quarry, Odisha\n\nNature of Incident:\nBucket and track damage during quarry operations. The worn undercarriage failed under load, causing damage to the bucket mechanism and track assembly.\n\nEstimated Loss: Rs. 1,12,000/-\n\nThis is an operational damage claim. No FIR required as per the nature of the incident.\n\nSite photographs and operator's incident report are attached.\n\nRegards,\nClaimPilot AI Claims System\nEquifi Financial Services\nBhubaneswar, Odisha\nRef: CLM-2026-0035 | Loan A/c: EQF-LN-2023-0541",
+      "type": "intimation",
+      "status": "sent",
+      "direction": "outgoing"
+    },
+    {
+      "id": "EML-035-002",
+      "timestamp": "2026-03-01T11:00:00",
+      "from": "claims.intimation@icicilombard.com",
+      "to": "claims@claimpilot.equifi.in",
+      "subject": "RE: Claim Intimation \u2014 Komatsu PC210 (OD-02-BQ-5521) \u2014 Registered",
+      "body": "Dear Team,\n\nYour claim has been registered under reference: ICL/CLM/2026/02/04567.\n\nPolicy details verified. Surveyor will be assigned within 48 hours.\n\nRegards,\nClaims Processing Desk\nICICI Lombard General Insurance Co. Ltd.",
+      "type": "follow_up",
+      "status": "received",
+      "direction": "incoming"
+    },
+    {
+      "id": "EML-035-003",
+      "timestamp": "2026-03-02T11:30:00",
+      "from": "surveyor.desk@icicilombard.com",
+      "to": "claims@claimpilot.equifi.in",
+      "cc": "mkrao.associates@gmail.com",
+      "subject": "Surveyor Assignment \u2014 Komatsu PC210 (OD-02-BQ-5521) \u2014 ICL/CLM/2026/02/04567",
+      "body": "Dear Team,\n\nSurveyor has been assigned for the above claim.\n\nSurveyor: M/s M.K. Rao & Associates\nContact: Mr. M.K. Rao, +91-674-XXXX567\nIRDAI License: SUR/OD/2019/0234\n\nPlease coordinate with the surveyor for inspection at the quarry site.\n\nRegards,\nSurveyor Desk\nICICI Lombard General Insurance Co. Ltd.",
+      "type": "surveyor_assignment",
+      "status": "received",
+      "direction": "incoming"
+    },
+    {
+      "id": "EML-035-004",
+      "timestamp": "2026-03-06T09:30:00",
+      "from": "mkrao.associates@gmail.com",
+      "to": "surveyor.desk@icicilombard.com",
+      "cc": "claims@claimpilot.equifi.in",
+      "subject": "Survey Report \u2014 Komatsu PC210 (OD-02-BQ-5521) \u2014 ICL/CLM/2026/02/04567",
+      "body": "Dear Sir/Madam,\n\nPlease find attached the survey report for the above claim.\n\nInspection Date: 5 March 2026\nLocation: Khurda Quarry, Odisha\n\nDamage Assessment:\n1. Bucket teeth and cutting edge: Rs. 35,000\n2. Track chain assembly (partial): Rs. 42,000\n3. Track roller replacement (2 nos.): Rs. 18,000\n4. Labour and fitting: Rs. 10,000\n\nGross Assessed Amount: Rs. 1,05,000/-\nLess: Depreciation on rubber/plastic parts (as per IRDAI schedule): Rs. 6,500\nNet Assessed Amount: Rs. 98,500/-\n\nNote: The undercarriage shows signs of heavy usage consistent with quarry operations. The damage is consistent with the reported incident. No indication of negligence or wear-and-tear beyond normal operational use.\n\nRecommendation: Claim is genuine. Suggest settlement at Rs. 98,500/-.\n\nRegards,\nM.K. Rao\nM.K. Rao & Associates",
+      "type": "follow_up",
+      "status": "received",
+      "direction": "incoming"
+    },
+    {
+      "id": "EML-035-005",
+      "timestamp": "2026-03-07T14:15:00",
+      "from": "claims.intimation@icicilombard.com",
+      "to": "claims@claimpilot.equifi.in",
+      "cc": "manish.agarwal@gmail.com",
+      "subject": "Claim Approved \u2014 Komatsu PC210 (OD-02-BQ-5521) \u2014 Rs. 98,500/-",
+      "body": "Dear Team,\n\nWe are pleased to inform you that the above claim has been approved.\n\nApproval Details:\nClaim Reference: ICL/CLM/2026/02/04567\nGross Assessed: Rs. 1,05,000/-\nDepreciation Deduction: Rs. 6,500/-\nNet Approved Amount: Rs. 98,500/-\n\nRepair Authorization:\nThe vehicle may be sent to Komatsu Authorized Service Centre or any network garage. Please share workshop details for our records.\n\nSettlement will be processed within 7 working days after submission of:\n1. Original repair invoice\n2. Post-repair photographs\n3. Replaced parts inspection report\n\nRegards,\nClaims Processing Desk\nICICI Lombard General Insurance Co. Ltd.",
+      "type": "follow_up",
+      "status": "received",
+      "direction": "incoming"
+    },
+    {
+      "id": "EML-035-006",
+      "timestamp": "2026-03-08T10:45:00",
+      "from": "claims@claimpilot.equifi.in",
+      "to": "claims.intimation@icicilombard.com",
+      "cc": "manish.agarwal@gmail.com",
+      "subject": "RE: Claim Approved \u2014 Komatsu PC210 \u2014 Workshop Details",
+      "body": "Dear Sir/Madam,\n\nThank you for the approval. The vehicle has been sent to the following authorized workshop:\n\nWorkshop: Komatsu Authorized Service Centre\nLocation: Jatni, Khurda District, Odisha\nContact: +91-674-XXXX123\n\nGate Pass No: GP-2026-0145 issued from our end.\n\nWe will submit the repair invoice, post-repair photographs and replaced parts report upon completion.\n\nRegards,\nClaimPilot AI Claims System\nEquifi Financial Services",
+      "type": "follow_up",
+      "status": "sent",
+      "direction": "outgoing"
+    },
+    {
+      "id": "EML-035-007",
+      "timestamp": "2026-03-16T10:00:00",
+      "from": "claims@claimpilot.equifi.in",
+      "to": "claims.intimation@icicilombard.com",
+      "subject": "Repair Completed \u2014 Komatsu PC210 (OD-02-BQ-5521) \u2014 Settlement Documents",
+      "body": "Dear Sir/Madam,\n\nRepair of the Komatsu PC210 Excavator has been completed at the authorized service centre.\n\nPlease find attached:\n1. Original repair invoice: Rs. 1,02,300/- (Komatsu Authorized, Jatni)\n2. Post-repair photographs (6 nos.)\n3. Replaced parts inspection report\n4. Workshop completion certificate\n\nAs per your approval, the net settlement amount is Rs. 98,500/-. We request settlement processing at the earliest.\n\nPayment Details:\nAccount Name: Equifi Financial Services Pvt. Ltd.\nBank: HDFC Bank, Bhubaneswar\nA/c No: XXXX XXXX 4521\nIFSC: HDFC0001234\n\nRegards,\nClaimPilot AI Claims System\nEquifi Financial Services",
+      "type": "follow_up",
+      "status": "sent",
+      "direction": "outgoing"
+    },
+    {
+      "id": "EML-035-008",
+      "timestamp": "2026-03-17T10:30:00",
+      "from": "settlements@icicilombard.com",
+      "to": "claims@claimpilot.equifi.in",
+      "cc": "manish.agarwal@gmail.com",
+      "subject": "Settlement Confirmation \u2014 Komatsu PC210 (OD-02-BQ-5521) \u2014 Rs. 98,500/- Credited",
+      "body": "Dear Team,\n\nWe are pleased to confirm that the settlement for the above claim has been processed.\n\nSettlement Details:\nClaim Reference: ICL/CLM/2026/02/04567\nSettlement Amount: Rs. 98,500/-\nPayment Mode: NEFT\nUTR No: ICICN2026031700234\nDate of Credit: 17 March 2026\n\nThe amount has been credited to the bank account provided. Please verify and confirm receipt.\n\nThis claim is now marked as SETTLED in our records.\n\nThank you for using ICICI Lombard. For any queries, please contact our helpline at 1800-266-9725.\n\nRegards,\nSettlement Desk\nICICI Lombard General Insurance Co. Ltd.",
+      "type": "settlement_notice",
+      "status": "received",
+      "direction": "incoming"
+    }
+  ]
+}

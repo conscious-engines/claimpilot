@@ -129,6 +129,49 @@ body {
 .view.active { display: block; }
 
 /* ═══════════════════════════════════════
+   SPLIT-SCREEN LAYOUT (default for Claimant)
+   ═══════════════════════════════════════ */
+.split-view {
+  display: none;
+}
+
+.split-view.active {
+  display: flex;
+  height: calc(100vh - 56px);
+}
+
+.split-panel-left {
+  width: 45%;
+  min-width: 360px;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+}
+
+.split-panel-right {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+/* Chat container in split view */
+.split-panel-left .chat-container {
+  max-width: 100%;
+  height: 100%;
+  border-left: none;
+  border-right: none;
+}
+
+/* Ops container in split view */
+.split-panel-right .ops-container {
+  max-width: 100%;
+  padding: 24px 20px;
+}
+
+.split-panel-right .claims-grid {
+  grid-template-columns: 1fr;
+}
+
+/* ═══════════════════════════════════════
    CLAIMANT VIEW (CHAT)
    ═══════════════════════════════════════ */
 .chat-container {
@@ -476,6 +519,7 @@ body {
 .timeline-dot.repair { background: var(--amber); }
 .timeline-dot.settlement { background: var(--green); }
 .timeline-dot.update { background: var(--text-tertiary); }
+.timeline-dot.email { background: var(--blue); }
 
 .timeline-time {
   font-size: 11px;
@@ -863,80 +907,230 @@ body {
 }
 
 /* ═══════════════════════════════════════
-   DEMO MODE (SPLIT-SCREEN)
+   EMAIL TRAIL
    ═══════════════════════════════════════ */
+.email-trail-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+}
 
-.demo-toggle {
-  padding: 5px 14px;
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 6px;
-  background: transparent;
-  color: rgba(255,255,255,0.6);
-  font-family: var(--font);
-  font-size: 12px;
-  font-weight: 500;
+.email-trail-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
   cursor: pointer;
-  transition: all 0.15s ease;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  user-select: none;
+  transition: color 0.15s;
+}
+
+.email-trail-toggle:hover {
+  color: var(--text-primary);
+}
+
+.email-trail-icon {
+  font-size: 16px;
+}
+
+.email-trail-chevron {
+  margin-left: auto;
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.email-trail-section.open .email-trail-chevron {
+  transform: rotate(180deg);
+}
+
+.email-trail-content {
+  display: none;
+  padding-top: 8px;
+}
+
+.email-trail-section.open .email-trail-content {
+  display: block;
+}
+
+.email-trail-empty {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding: 8px 0;
+}
+
+.email-item {
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: box-shadow 0.15s;
+}
+
+.email-item:last-child {
+  margin-bottom: 0;
+}
+
+.email-item:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.email-item-header {
+  padding: 10px 12px;
+  cursor: pointer;
+  background: var(--surface);
+}
+
+.email-item.outgoing .email-item-header {
+  border-left: 3px solid var(--blue);
+}
+
+.email-item.incoming .email-item-header {
+  border-left: 3px solid var(--green);
+}
+
+.email-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.email-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.email-tag-sent {
+  background: var(--blue-bg);
+  color: var(--blue);
+}
+
+.email-tag-received {
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.email-type-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  background: var(--surface-secondary);
+  color: var(--text-secondary);
+}
+
+.email-time {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-left: auto;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.email-item-subject {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.demo-toggle:hover {
-  border-color: rgba(255,255,255,0.4);
-  color: rgba(255,255,255,0.85);
+.email-item.expanded .email-item-subject {
+  white-space: normal;
 }
 
-.demo-toggle.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-
-/* When demo mode is active, body gets the class */
-body.demo-mode .view { display: none; }
-
-body.demo-mode .demo-split {
+.email-item-parties {
   display: flex;
-  height: calc(100vh - 56px);
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-tertiary);
 }
 
-.demo-split {
+.email-from, .email-to {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+.email-arrow {
+  flex-shrink: 0;
+  color: var(--text-tertiary);
+}
+
+.email-item-body {
   display: none;
+  padding: 12px;
+  background: var(--surface-secondary);
+  border-top: 1px solid var(--border-light);
 }
 
-.demo-split .demo-panel-left,
-.demo-split .demo-panel-right {
-  width: 50%;
-  overflow-y: auto;
-  border-right: 1px solid var(--border);
+.email-item.expanded .email-item-body {
+  display: block;
 }
 
-.demo-split .demo-panel-right {
-  border-right: none;
-  background: var(--bg);
+.email-cc {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
 }
 
-/* Override chat container sizing in demo mode */
-body.demo-mode .demo-panel-left .chat-container {
-  max-width: 100%;
-  height: 100%;
-  border-left: none;
-  border-right: none;
-}
-
-/* Override ops container sizing in demo mode */
-body.demo-mode .demo-panel-right .ops-container {
-  max-width: 100%;
-  padding: 24px 20px;
-}
-
-body.demo-mode .demo-panel-right .claims-grid {
-  grid-template-columns: 1fr;
+.email-body-text {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  font-family: var(--font);
+  margin: 0;
+  background: none;
 }
 
 /* ── Responsive ── */
+@media (max-width: 900px) {
+  .split-view.active {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .split-panel-left {
+    width: 100%;
+    min-width: unset;
+    height: 60vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .split-panel-right {
+    width: 100%;
+  }
+
+  .split-panel-left .chat-container {
+    height: 100%;
+  }
+}
+
 @media (max-width: 600px) {
   .claims-grid { grid-template-columns: 1fr; }
   .metrics-grid { grid-template-columns: 1fr 1fr; }
   .ops-container, .mgmt-container { padding: 20px 16px; }
-  .demo-toggle { display: none; }
+
+  .split-panel-left {
+    height: 50vh;
+  }
+
+  .email-from, .email-to {
+    max-width: 120px;
+  }
 }

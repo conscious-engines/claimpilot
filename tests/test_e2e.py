@@ -17,24 +17,24 @@ def test_app_loads_and_role_switcher(browser_context):
     btns = page.locator(".role-btn")
     assert btns.count() == 3
 
-    # Claimant view is active by default
-    assert page.locator("#view-claimant").is_visible()
+    # Split view (claimant default) is active by default
+    assert page.locator("#splitView").is_visible()
     assert not page.locator("#view-operations").is_visible()
     assert not page.locator("#view-management").is_visible()
 
     # Switch to Operations
     page.locator('.role-btn[data-role="operations"]').click()
     assert page.locator("#view-operations").is_visible()
-    assert not page.locator("#view-claimant").is_visible()
+    assert not page.locator("#splitView").is_visible()
 
     # Switch to Management
     page.locator('.role-btn[data-role="management"]').click()
     assert page.locator("#view-management").is_visible()
     assert not page.locator("#view-operations").is_visible()
 
-    # Switch back to Claimant
+    # Switch back to Claimant (split view)
     page.locator('.role-btn[data-role="claimant"]').click()
-    assert page.locator("#view-claimant").is_visible()
+    assert page.locator("#splitView").is_visible()
 
     page.close()
 
@@ -100,10 +100,10 @@ def test_operations_view_claims(browser_context):
 
     # Switch to operations
     page.locator('.role-btn[data-role="operations"]').click()
-    page.wait_for_selector(".claim-card", timeout=5000)
+    page.wait_for_selector("#view-operations .claim-card", timeout=5000)
 
-    # Should have 4 claim cards
-    cards = page.locator(".claim-card")
+    # Should have 4 claim cards in the operations view
+    cards = page.locator("#view-operations .claim-card")
     assert cards.count() == 4
 
     # Check claim IDs are present
@@ -120,7 +120,7 @@ def test_operations_view_claims(browser_context):
     assert "Settled" in content
 
     # Check integration chips exist
-    chips = page.locator(".integration-chip")
+    chips = page.locator("#view-operations .integration-chip")
     assert chips.count() > 0
 
     page.close()
@@ -194,14 +194,14 @@ def test_integration_logs_in_operations(browser_context):
     page.goto(base_url)
 
     page.locator('.role-btn[data-role="operations"]').click()
-    page.wait_for_selector(".timeline-item", timeout=5000)
+    page.wait_for_selector("#view-operations .timeline-item", timeout=5000)
 
     # Should have timeline items
-    items = page.locator(".timeline-item")
+    items = page.locator("#view-operations .timeline-item")
     assert items.count() > 0
 
     # Should have claim tags
-    tags = page.locator(".timeline-claim-tag")
+    tags = page.locator("#view-operations .timeline-claim-tag")
     assert tags.count() > 0
 
     # Check for integration type events

@@ -6,6 +6,7 @@ const API = '';
 let claims = [];
 let currentClaimId = null;
 let conversations = {};
+let emailsCache = {};
 
 // ── Helpers ──
 function esc(str) {
@@ -28,14 +29,18 @@ function showLoading(el) {
   el.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div>Loading...</div>';
 }
 
-let demoMode = false;
+function formatEmailTime(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) +
+    ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
 
 // ── Init ──
 document.addEventListener('DOMContentLoaded', async () => {
   setupRoleSwitcher();
-  setupDemoMode();
   await loadClaims();
   setupChat();
+  renderSplitOpsPanel();
 });
 
 // ── Role Switcher ──
@@ -46,151 +51,55 @@ function setupRoleSwitcher() {
       btns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const role = btn.dataset.role;
+
+      // Hide everything first
+      document.getElementById('splitView').classList.remove('active');
       document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.getElementById(`view-${role}`).classList.add('active');
-      if (role === 'operations') renderOperations();
-      if (role === 'management') renderManagement();
+
+      if (role === 'claimant') {
+        document.getElementById('splitView').classList.add('active');
+        renderSplitOpsPanel();
+      } else if (role === 'operations') {
+        document.getElementById('view-operations').classList.add('active');
+        renderOperations();
+      } else if (role === 'management') {
+        document.getElementById('view-management').classList.add('active');
+        renderManagement();
+      }
     });
   });
 }
 
-// ── Demo Mode ──
-function setupDemoMode() {
-  const btn = document.getElementById('demoToggle');
-  if (!btn) return;
-  btn.addEventListener('click', () => {
-    demoMode = !demoMode;
-    btn.classList.toggle('active', demoMode);
-    applyDemoMode();
-  });
-}
+// ── Split-screen Ops Panel (right side) ──
+async function renderSplitOpsPanel() {
+  const panel = document.getElementById('splitPanelRight');
+  if (!panel) return;
 
-function applyDemoMode() {
-  const body = document.body;
-  const split = document.getElementById('demoSplit');
-  const leftPanel = document.getElementById('demoPanelLeft');
-  const rightPanel = document.getElementById('demoPanelRight');
-
-  if (demoMode) {
-    body.classList.add('demo-mode');
-
-    // Move claimant view into left panel
-    const claimantView = document.getElementById('view-claimant');
-    leftPanel.appendChild(claimantView);
-    claimantView.classList.add('active');
-    claimantView.style.display = 'block';
-
-    // Clone operations structure into right panel (fresh render)
-    rightPanel.innerHTML = `
-      <div class="ops-container">
-        <h2>Operations Dashboard</h2>
-        <p class="ops-subtitle">Active claims and system integrations</p>
-        <div class="claims-grid" id="demoClaimsGrid"></div>
-        <div class="timeline-section">
-          <h3>Integration Activity Log</h3>
-          <div class="timeline-list" id="demoTimelineList"></div>
-        </div>
+  panel.innerHTML = `
+    <div class="ops-container">
+      <h2>Operations Dashboard</h2>
+      <p class="ops-subtitle">Active claims and system integrations</p>
+      <div class="claims-grid" id="splitClaimsGrid"></div>
+      <div class="timeline-section">
+        <h3>Integration Activity Log</h3>
+        <div class="timeline-list" id="splitTimelineList"></div>
       </div>
-    `;
-    renderDemoOperations();
-  } else {
-    body.classList.remove('demo-mode');
-
-    // Move claimant view back to its original location
-    const claimantView = document.getElementById('view-claimant');
-    const opsView = document.getElementById('view-operations');
-    document.body.insertBefore(claimantView, opsView);
-
-    // Clear demo panels
-    leftPanel.innerHTML = '';
-    rightPanel.innerHTML = '';
-
-    // Restore normal view state: activate whichever role button is active
-    const activeRole = document.querySelector('.role-btn.active');
-    if (activeRole) {
-      const role = activeRole.dataset.role;
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.getElementById(`view-${role}`).classList.add('active');
-    } else {
-      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-      document.getElementById('view-claimant').classList.add('active');
-    }
-  }
-}
-
-async function renderDemoOperations() {
-  const grid = document.getElementById('demoClaimsGrid');
-  const list = document.getElementById('demoTimelineList');
-  if (!grid || !list) return;
+    </div>
+  `;
 
   try {
     const res = await fetch(`${API}/api/claims`);
     const claimsData = await res.json();
-    renderClaimsGridInto(claimsData, grid);
-    renderTimelineInto(claimsData, list);
+    const grid = document.getElementById('splitClaimsGrid');
+    const list = document.getElementById('splitTimelineList');
+    if (grid && list) {
+      await renderClaimsGridInto(claimsData, grid);
+      renderTimelineInto(claimsData, list);
+    }
   } catch (e) {
-    grid.innerHTML = '<p>Failed to load claims.</p>';
+    const grid = document.getElementById('splitClaimsGrid');
+    if (grid) grid.innerHTML = '<p>Failed to load claims.</p>';
   }
-}
-
-function renderClaimsGridInto(claimsData, grid) {
-  grid.innerHTML = '';
-  claimsData.forEach(c => {
-    const card = document.createElement('div');
-    card.className = 'claim-card';
-    card.dataset.claimId = c.id;
-
-    const integrations = c.integrations || {};
-    const chipsHTML = Object.entries(integrations).map(([key, val]) => {
-      const label = esc(key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
-      const st = esc(val.status || 'pending');
-      return `<span class="integration-chip ${st}"><span class="dot"></span>${label}</span>`;
-    }).join('');
-
-    card.innerHTML = `
-      <div class="claim-card-header">
-        <div>
-          <div class="claim-card-id">${esc(c.id)}</div>
-          <div class="claim-card-vehicle">${esc(c.vehicle)}</div>
-          <div class="claim-card-reg">${esc(c.registration)}</div>
-        </div>
-        <span class="status-badge ${statusClass(c.status)}">${esc(c.status)}</span>
-      </div>
-      <div class="claim-card-incident">${esc(c.incident)}</div>
-      <div class="claim-card-details">
-        <div><div class="claim-detail-label">Insurer</div><div class="claim-detail-value">${esc(c.insurer)}</div></div>
-        <div><div class="claim-detail-label">Amount</div><div class="claim-detail-value">${formatAmount(c.estimated_amount)}</div></div>
-        <div><div class="claim-detail-label">Claimant</div><div class="claim-detail-value">${esc(c.claimant_name)}</div></div>
-        <div><div class="claim-detail-label">Surveyor</div><div class="claim-detail-value">${esc(c.surveyor || 'Pending')}</div></div>
-      </div>
-      <div class="integrations-row">${chipsHTML}</div>
-    `;
-    grid.appendChild(card);
-  });
-}
-
-function renderTimelineInto(claimsData, list) {
-  const events = [];
-  claimsData.forEach(c => {
-    (c.timeline || []).forEach(t => events.push({ ...t, claimId: c.id }));
-  });
-  events.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  list.innerHTML = '';
-  events.slice(0, 20).forEach(e => {
-    const d = new Date(e.date);
-    const timeStr = d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) +
-      ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: false });
-    const item = document.createElement('div');
-    item.className = 'timeline-item';
-    item.innerHTML = `
-      <span class="timeline-dot ${esc(e.type)}"></span>
-      <span class="timeline-time">${esc(timeStr)}</span>
-      <span class="timeline-event">${esc(e.event)}</span>
-      <span class="timeline-claim-tag">${esc(e.claimId)}</span>
-    `;
-    list.appendChild(item);
-  });
 }
 
 // ── Load Claims ──
@@ -213,7 +122,6 @@ function renderClaimTabs() {
     const btn = document.createElement('button');
     btn.className = 'claim-tab';
     btn.dataset.claimId = c.id;
-    // Show short vehicle name instead of claim ID
     const shortName = c.vehicle.split(' ').slice(0, 2).join(' ');
     btn.textContent = shortName;
     btn.title = `${c.id} — ${c.vehicle}`;
@@ -310,6 +218,12 @@ function setupChat() {
       });
       const data = await res.json();
       msgs.push({ role: 'assistant', content: data.response });
+
+      // If email was auto-sent, refresh the ops panel
+      if (data.email_sent) {
+        refreshSplitOpsEmails();
+      }
+
       triggerIntegrationPulse(currentClaimId);
     } catch (e) {
       msgs.push({ role: 'assistant', content: 'Sorry, kuch technical issue aa gaya. Please try again.' });
@@ -332,12 +246,10 @@ function setupChat() {
 
   micBtn.addEventListener('click', async () => {
     if (mediaRecorder && mediaRecorder.state === 'recording') {
-      // Stop recording
       mediaRecorder.stop();
       return;
     }
 
-    // Start recording
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorder = new MediaRecorder(stream, { mimeType: getMimeType() });
@@ -348,7 +260,6 @@ function setupChat() {
       };
 
       mediaRecorder.onstop = async () => {
-        // Clean up
         stream.getTracks().forEach(t => t.stop());
         micBtn.classList.remove('recording');
         removeRecordingIndicator();
@@ -358,7 +269,6 @@ function setupChat() {
         const duration = formatDuration(elapsed);
         const blob = new Blob(audioChunks, { type: mediaRecorder.mimeType });
 
-        // Show voice message placeholder in chat
         const msgs = conversations[currentClaimId] || [];
         const voiceMsg = { role: 'user', format: 'voice', duration: duration, transcription: '' };
         msgs.push(voiceMsg);
@@ -369,7 +279,6 @@ function setupChat() {
         sendBtn.disabled = true;
         micBtn.disabled = true;
 
-        // Upload and transcribe
         try {
           const ext = mediaRecorder.mimeType.includes('webm') ? '.webm' : '.ogg';
           const formData = new FormData();
@@ -500,7 +409,6 @@ function showTypingIndicator() {
 
 // ── Integration Pulse Animation ──
 function triggerIntegrationPulse(claimId) {
-  // Pulse integration chips in both normal ops view and demo panel
   const cards = document.querySelectorAll(`.claim-card[data-claim-id="${claimId}"]`);
   cards.forEach(card => {
     const chips = card.querySelectorAll('.integration-chip');
@@ -512,48 +420,86 @@ function triggerIntegrationPulse(claimId) {
     });
   });
 
-  // In demo mode, auto-refresh the ops panel after each interaction
-  if (demoMode) {
-    renderDemoOperations().then(() => {
-      // Re-pulse after refresh since DOM was rebuilt
-      setTimeout(() => {
-        const freshCards = document.querySelectorAll(`#demoClaimsGrid .claim-card[data-claim-id="${claimId}"]`);
-        freshCards.forEach(card => {
-          const chips = card.querySelectorAll('.integration-chip');
-          chips.forEach((chip, i) => {
-            setTimeout(() => {
-              chip.classList.add('pulse');
-              setTimeout(() => chip.classList.remove('pulse'), 1200);
-            }, i * 300);
-          });
+  // Refresh the split ops panel after each interaction
+  renderSplitOpsPanel().then(() => {
+    setTimeout(() => {
+      const freshCards = document.querySelectorAll(`#splitClaimsGrid .claim-card[data-claim-id="${claimId}"]`);
+      freshCards.forEach(card => {
+        const chips = card.querySelectorAll('.integration-chip');
+        chips.forEach((chip, i) => {
+          setTimeout(() => {
+            chip.classList.add('pulse');
+            setTimeout(() => chip.classList.remove('pulse'), 1200);
+          }, i * 300);
         });
-      }, 100);
-    });
-  }
+      });
+    }, 100);
+  });
 }
 
-// ── Operations View ──
-async function renderOperations() {
-  const grid = document.getElementById('claimsGrid');
-  const list = document.getElementById('timelineList');
-  showLoading(grid);
-  showLoading(list);
+// ── Refresh emails in split ops panel ──
+function refreshSplitOpsEmails() {
+  renderSplitOpsPanel();
+}
 
+// ── Email Trail Rendering ──
+async function loadEmails(claimId) {
+  if (emailsCache[claimId]) return emailsCache[claimId];
   try {
-    const res = await fetch(`${API}/api/claims`);
-    const claimsData = await res.json();
-    renderClaimsGrid(claimsData);
-    renderTimeline(claimsData);
+    const res = await fetch(`${API}/api/emails/${claimId}`);
+    if (res.ok) {
+      const data = await res.json();
+      emailsCache[claimId] = data;
+      return data;
+    }
   } catch (e) {
-    grid.innerHTML = '<p>Failed to load claims.</p>';
+    console.error('Failed to load emails for', claimId, e);
   }
+  return [];
 }
 
-function renderClaimsGrid(claimsData) {
-  const grid = document.getElementById('claimsGrid');
-  grid.innerHTML = '';
+function renderEmailTrail(emails, container) {
+  if (!emails || emails.length === 0) {
+    container.innerHTML = '<div class="email-trail-empty">No emails yet</div>';
+    return;
+  }
 
-  claimsData.forEach(c => {
+  container.innerHTML = '';
+  emails.forEach(email => {
+    const item = document.createElement('div');
+    item.className = `email-item ${email.direction || (email.status === 'sent' ? 'outgoing' : 'incoming')}`;
+    const direction = email.direction || (email.status === 'sent' ? 'outgoing' : 'incoming');
+    const dirLabel = direction === 'outgoing' ? 'Sent' : 'Received';
+    const dirClass = direction === 'outgoing' ? 'email-tag-sent' : 'email-tag-received';
+    const typeLabel = email.type ? email.type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '';
+
+    item.innerHTML = `
+      <div class="email-item-header" onclick="this.parentElement.classList.toggle('expanded')">
+        <div class="email-item-meta">
+          <span class="email-tag ${dirClass}">${esc(dirLabel)}</span>
+          ${typeLabel ? `<span class="email-type-tag">${esc(typeLabel)}</span>` : ''}
+          <span class="email-time">${esc(formatEmailTime(email.timestamp))}</span>
+        </div>
+        <div class="email-item-subject">${esc(email.subject)}</div>
+        <div class="email-item-parties">
+          <span class="email-from">${esc(email.from)}</span>
+          <span class="email-arrow">&rarr;</span>
+          <span class="email-to">${esc(email.to)}</span>
+        </div>
+      </div>
+      <div class="email-item-body">
+        ${email.cc ? `<div class="email-cc">CC: ${esc(email.cc)}</div>` : ''}
+        <pre class="email-body-text">${esc(email.body)}</pre>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+// ── Shared rendering functions ──
+async function renderClaimsGridInto(claimsData, grid) {
+  grid.innerHTML = '';
+  for (const c of claimsData) {
     const card = document.createElement('div');
     card.className = 'claim-card';
     card.dataset.claimId = c.id;
@@ -564,6 +510,10 @@ function renderClaimsGrid(claimsData) {
       const st = esc(val.status || 'pending');
       return `<span class="integration-chip ${st}"><span class="dot"></span>${label}</span>`;
     }).join('');
+
+    // Load emails for this claim
+    const emails = await loadEmails(c.id);
+    const emailCount = emails.length;
 
     card.innerHTML = `
       <div class="claim-card-header">
@@ -582,13 +532,26 @@ function renderClaimsGrid(claimsData) {
         <div><div class="claim-detail-label">Surveyor</div><div class="claim-detail-value">${esc(c.surveyor || 'Pending')}</div></div>
       </div>
       <div class="integrations-row">${chipsHTML}</div>
+      <div class="email-trail-section">
+        <div class="email-trail-toggle" onclick="this.parentElement.classList.toggle('open')">
+          <span class="email-trail-icon">&#9993;</span>
+          Email Trail (${emailCount})
+          <span class="email-trail-chevron">&#9662;</span>
+        </div>
+        <div class="email-trail-content" id="emailTrail-${esc(c.id)}"></div>
+      </div>
     `;
     grid.appendChild(card);
-  });
+
+    // Render emails into the trail container
+    const trailContainer = card.querySelector(`#emailTrail-${c.id}`);
+    if (trailContainer) {
+      renderEmailTrail(emails, trailContainer);
+    }
+  }
 }
 
-function renderTimeline(claimsData) {
-  const list = document.getElementById('timelineList');
+function renderTimelineInto(claimsData, list) {
   const events = [];
   claimsData.forEach(c => {
     (c.timeline || []).forEach(t => events.push({ ...t, claimId: c.id }));
@@ -610,6 +573,23 @@ function renderTimeline(claimsData) {
     `;
     list.appendChild(item);
   });
+}
+
+// ── Operations View (full-width) ──
+async function renderOperations() {
+  const grid = document.getElementById('claimsGrid');
+  const list = document.getElementById('timelineList');
+  showLoading(grid);
+  showLoading(list);
+
+  try {
+    const res = await fetch(`${API}/api/claims`);
+    const claimsData = await res.json();
+    await renderClaimsGridInto(claimsData, grid);
+    renderTimelineInto(claimsData, list);
+  } catch (e) {
+    grid.innerHTML = '<p>Failed to load claims.</p>';
+  }
 }
 
 // ── Management View ──
